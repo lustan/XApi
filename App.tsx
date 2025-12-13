@@ -113,8 +113,8 @@ const App: React.FC = () => {
       setResponse(null); // Clear response on switch? Maybe keep per tab later
   };
 
-  const handleTabClose = (id: string, e: React.MouseEvent) => {
-      e.stopPropagation();
+  const handleTabClose = (id: string, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
       const newTabs = tabs.filter(t => t.id !== id);
       
       if (newTabs.length === 0) {
@@ -131,6 +131,59 @@ const App: React.FC = () => {
   const handleTabClick = (id: string) => {
       setActiveTabId(id);
       // setResponse(null); // Optional: clear response when switching tabs? Or store response in tab
+  };
+
+  const handleTabReorder = (fromIndex: number, toIndex: number) => {
+      const newTabs = [...tabs];
+      const [movedTab] = newTabs.splice(fromIndex, 1);
+      newTabs.splice(toIndex, 0, movedTab);
+      setTabs(newTabs);
+  };
+
+  const handleTabRename = (id: string, newName: string) => {
+      setTabs(tabs.map(t => t.id === id ? { ...t, title: newName } : t));
+      
+      // If it's a saved request, update the collection as well
+      const tab = tabs.find(t => t.id === id);
+      if (tab && tab.data && tab.data.collectionId) {
+          handleRenameRequest(tab.data.id, newName);
+      } else if (tab && tab.data) {
+          // If draft, just update local data state so it persists in tab
+          tab.data.name = newName;
+      }
+  };
+
+  const handleTabAction = (action: 'close-others' | 'close-right' | 'close-left' | 'close-all', targetId: string) => {
+      const targetIndex = tabs.findIndex(t => t.id === targetId);
+      if (targetIndex === -1) return;
+
+      let newTabs: TabItem[] = [];
+
+      switch (action) {
+          case 'close-others':
+              newTabs = tabs.filter(t => t.id === targetId);
+              break;
+          case 'close-right':
+              newTabs = tabs.filter((_, i) => i <= targetIndex);
+              break;
+          case 'close-left':
+              newTabs = tabs.filter((_, i) => i >= targetIndex);
+              break;
+          case 'close-all':
+              newTabs = [];
+              break;
+      }
+
+      if (newTabs.length === 0) {
+          setTabs([{ id: 'welcome', type: 'welcome', title: 'Welcome' }]);
+          setActiveTabId('welcome');
+      } else {
+          setTabs(newTabs);
+          // If active tab was closed, switch to the target tab (or last available)
+          if (!newTabs.find(t => t.id === activeTabId)) {
+             setActiveTabId(newTabs[newTabs.length - 1].id);
+          }
+      }
   };
 
   // --- Request Logic ---
@@ -273,12 +326,27 @@ const App: React.FC = () => {
              });
         }
     }
+    
+    // Better naming logic: use last part of path or host
+    let smartName = log.url;
+    try {
+        const u = new URL(log.url);
+        const pathParts = u.pathname.split('/').filter(p => p);
+        if (pathParts.length > 0) {
+            smartName = pathParts[pathParts.length - 1];
+        } else {
+            smartName = u.hostname;
+        }
+    } catch (e) {
+        smartName = log.url.substring(0, 20);
+    }
+
     const newReq: HttpRequest = {
         ...createNewRequest(),
         id: log.id, // IMPORTANT: Use log.id to prevent duplicates in Tabs
         url: log.url,
         method: log.method as any,
-        name: `${log.method} ${log.url.substring(0, 20)}...`,
+        name: smartName,
         params: queryStringToParams(log.url.split('?')[1] || ''),
         headers: headers,
         bodyType,
@@ -444,6 +512,9 @@ const App: React.FC = () => {
             activeTabId={activeTabId}
             onTabClick={handleTabClick}
             onTabClose={handleTabClose}
+            onTabReorder={handleTabReorder}
+            onTabRename={handleTabRename}
+            onTabAction={handleTabAction}
             collections={collections}
             onSaveToCollection={handleSaveToCollection}
          />
