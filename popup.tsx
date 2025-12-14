@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import { LoggedRequest } from './types';
 import { formatUrl, formatTime, getMethodBadgeColor } from './utils';
+import { Logo } from './components/Logo';
 
 const Popup = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -61,7 +62,8 @@ const Popup = () => {
       {/* Header */}
       <div className="px-4 py-3 bg-gray-900 text-white flex justify-between items-center shadow-md flex-shrink-0">
          <h1 className="font-bold text-sm flex items-center">
-            <span className="mr-2 text-green-400">⚡</span> HTTP Debugger
+            <Logo className="text-green-400 mr-2" size={16} />
+            HTTP Debugger
          </h1>
          <div className="flex items-center space-x-2">
              <button 

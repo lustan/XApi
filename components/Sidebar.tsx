@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { LoggedRequest, SidebarTab, CollectionItem, HttpRequest } from '../types';
 import { formatUrl, formatTime, getMethodColor } from '../utils';
 import { APP_CONFIG } from '../config';
+import { Logo } from './Logo';
 
 interface SidebarProps {
   activeTab: SidebarTab;
@@ -133,7 +134,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="flex flex-col h-full bg-gray-50 border-r border-gray-200 w-72 flex-shrink-0 relative select-none">
       {/* Header Actions */}
       <div className="h-10 px-3 border-b border-gray-200 bg-white flex items-center justify-between">
-         <span className="font-bold text-gray-700 text-sm">Workspace</span>
+         <div className="flex items-center space-x-2">
+            <Logo size={18} className="text-green-600" />
+            <span className="font-bold text-gray-700 text-sm">Workspace</span>
+         </div>
          <div className="flex space-x-1 items-center">
             <button onClick={onImportCurl} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded" title="Import cURL">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
