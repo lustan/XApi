@@ -221,13 +221,34 @@ const App: React.FC = () => {
 
     try {
       const headersInit: Record<string, string> = {};
+      const dnrHeaders: { name: string, value: string }[] = [];
+      // List of headers that fetch/browser often blocks or ignores, which we should offload to DNR
+      const forbiddenHeaders = ['origin', 'referer', 'user-agent', 'cookie', 'host', 'date', 'via', 'connection', 'upgrade'];
+
       activeRequest.headers.filter(h => h.enabled).forEach(h => {
         const key = h.key.trim();
-        // Filter out pseudo-headers (starting with :) which cause "Invalid name" in fetch
+        const lowerKey = key.toLowerCase();
+        
+        // Filter out pseudo-headers
         if (key && !key.startsWith(':')) {
-           headersInit[key] = h.value;
+             if (forbiddenHeaders.includes(lowerKey) || lowerKey.startsWith('sec-') || lowerKey.startsWith('proxy-')) {
+                 dnrHeaders.push({ name: key, value: h.value });
+             } else {
+                 headersInit[key] = h.value;
+             }
         }
       });
+
+      // If we have restricted headers, send them to background to set up a rule
+      if (dnrHeaders.length > 0 && chrome.runtime) {
+          await new Promise<void>((resolve) => {
+              chrome.runtime.sendMessage({ 
+                  type: 'SET_REQUEST_HEADERS', 
+                  url: activeRequest.url, 
+                  headers: dnrHeaders 
+              }, () => resolve());
+          });
+      }
 
       const options: RequestInit = {
         method: activeRequest.method,

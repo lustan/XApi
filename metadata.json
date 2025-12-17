@@ -1,5 +1,5 @@
 {
-  "name": "HTTP Debugger & Client",
+  "name": "HTTP CaptureExt Client",
   "description": "Intercept, debug & replay HTTP requests. A comprehensive API client with collections and cURL support inside Chrome DevTools.",
   "requestFramePermissions": []
 }

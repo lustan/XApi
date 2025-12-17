@@ -18,12 +18,60 @@ const updateBadge = (recording: boolean) => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({ isRecording: false, logs: [] });
   updateBadge(false);
+  // Clear any existing dynamic rules on startup
+  chrome.declarativeNetRequest.updateSessionRules({
+     removeRuleIds: [1] // We use ID 1 for the singleton active request rule
+  });
 });
 
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.isRecording) {
     updateBadge(changes.isRecording.newValue);
   }
+});
+
+// --- DNR Rule Manager for Header Overrides ---
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'SET_REQUEST_HEADERS') {
+        const { url, headers } = message;
+        // headers: { name: string, value: string }[]
+        
+        // We use a fixed Rule ID (1) for the "Active Debug Request".
+        // This simplifies management. Each "Send" overwrites the rule for that specific URL.
+        const ruleId = 1;
+
+        const requestHeaders = headers.map((h: any) => ({
+            header: h.name,
+            operation: chrome.declarativeNetRequest.HeaderOperation.SET,
+            value: h.value
+        }));
+
+        const rule = {
+            id: ruleId,
+            priority: 1,
+            action: {
+                type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
+                requestHeaders: requestHeaders
+            },
+            condition: {
+                // We match the exact URL to avoid side effects on other requests
+                urlFilter: url, 
+                resourceTypes: [
+                    chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
+                    chrome.declarativeNetRequest.ResourceType.OTHER
+                ]
+            }
+        };
+
+        chrome.declarativeNetRequest.updateSessionRules({
+            removeRuleIds: [ruleId],
+            addRules: [rule]
+        }).then(() => {
+            sendResponse({ success: true });
+        });
+
+        return true; // Keep channel open for async response
+    }
 });
 
 // --- Storage Queue for Race Condition Fix ---
