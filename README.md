@@ -2,7 +2,7 @@
 
 A powerful, open-source Chrome Extension built with **Manifest V3** that acts as a lightweight Postman alternative directly inside your Chrome DevTools. Intercept, debug, edit, and replay HTTP requests without leaving the browser.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)
 ![Version](https://img.shields.io/badge/version-1.0.1-green)
 ![Manifest](https://img.shields.io/badge/Manifest-V3-orange)
 
@@ -29,8 +29,8 @@ A powerful, open-source Chrome Extension built with **Manifest V3** that acts as
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/lustan/chrome-http-debugger.git
-    cd chrome-http-debugger
+    git clone https://github.com/lustan/CaptureApi.git
+    cd CaptureApi
     ```
 
 2.  **Install dependencies**
