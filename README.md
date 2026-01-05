@@ -12,15 +12,11 @@ XApi is a high-performance, open-source Chrome Extension (Manifest V3) that brin
 
 ## 📸 Overview
 
-### Full Dashboard Workspace
-*Manage collections and complex requests in a dedicated window.*
-<img width="1919" height="1027" alt="2" src="https://github.com/user-attachments/assets/2a0be015-df7d-4375-9add-afbdc7762e62" />
-
-
-### Integrated DevTools Panel
 *Debug directly while you browse without switching tabs.*
-<img width="1919" height="1029" alt="screenshot-20251225-200414" src="https://github.com/user-attachments/assets/440af990-be4b-49df-92c3-9469f74a962c" />
+*Manage collections and complex requests in a dedicated window.*
 
+
+https://github.com/user-attachments/assets/490f58f6-b000-49de-80e1-702669052b55
 
 ---
 
