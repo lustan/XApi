@@ -27,8 +27,6 @@ https://github.com/user-attachments/assets/490f58f6-b000-49de-80e1-702669052b55
 - **📂 Collection Management**: Organize your workspace with nested collections and persistent storage.
 - **🔄 Smart Replay**: One-click "Send" to replay captured requests with modified parameters or headers.
 - **📥 cURL Integration**: Paste raw cURL commands to instantly generate fully editable request objects.
-- **📑 Multi-Tab Workspace**: Handle multiple debugging sessions simultaneously with a familiar tab-based UI.
-- **🔍 Advanced Inspection**: Pre-formatted JSON view, response timing, and size metrics.
 
 ---
 
