@@ -1,0 +1,378 @@
+{
+  "extName": {
+    "message": "XApi HTTP 客户端 - API 测试工具",
+    "description": "在 Chrome 网上应用店和扩展管理页面显示的扩展名称"
+  },
+  "extDescription": {
+    "message": "拦截、调试和重放 HTTP 请求。一个全面的 API 客户端，支持集合和 cURL，内置于 Chrome 开发者工具中。",
+    "description": "扩展描述"
+  },
+  "welcomeTitle": {
+    "message": "XApi",
+    "description": "欢迎页面主标题"
+  },
+  "welcomeSubtitle": {
+    "message": "专业便捷地拦截、调试和重放 API 请求。",
+    "description": "欢迎页面副标题"
+  },
+  "importedRequest": {
+    "message": "导入的请求",
+    "description": "导入请求的默认名称"
+  },
+  "newRequest": {
+    "message": "新建请求",
+    "description": "创建新请求的按钮文字"
+  },
+  "newRequestDesc": {
+    "message": "从零开始创建新的 API 调用",
+    "description": "新建请求选项的描述"
+  },
+  "newCollection": {
+    "message": "新建集合",
+    "description": "创建新集合的按钮文字"
+  },
+  "newCollectionDesc": {
+    "message": "将请求组织到文件夹中",
+    "description": "新建集合选项的描述"
+  },
+  "importCurl": {
+    "message": "导入 cURL",
+    "description": "导入 cURL 命令的按钮文字"
+  },
+  "importCurlDesc": {
+    "message": "从剪贴板快速导入",
+    "description": "导入 cURL 选项的描述"
+  },
+  "runner": {
+    "message": "执行器",
+    "description": "执行器功能名称"
+  },
+  "runnerDesc": {
+    "message": "自动化测试（即将推出）",
+    "description": "执行器功能的描述"
+  },
+  "settings": {
+    "message": "设置",
+    "description": "设置菜单项"
+  },
+  "githubRepository": {
+    "message": "GitHub 仓库",
+    "description": "GitHub 仓库链接文字"
+  },
+  "sendFeedback": {
+    "message": "发送反馈",
+    "description": "发送反馈链接文字"
+  },
+  "resetWorkspace": {
+    "message": "重置工作区",
+    "description": "重置工作区按钮文字"
+  },
+  "newCollectionAction": {
+    "message": "新建集合",
+    "description": "创建新集合的操作"
+  },
+  "newRequestAction": {
+    "message": "新建请求",
+    "description": "创建新请求的操作"
+  },
+  "importCurlAction": {
+    "message": "导入 cURL",
+    "description": "导入 cURL 的操作"
+  },
+  "clearAllDataConfirm": {
+    "message": "确定要删除所有集合、请求和历史记录吗？此操作无法撤销。",
+    "description": "清除所有数据时的确认消息"
+  },
+  "deleteCollectionConfirm": {
+    "message": "删除此集合？",
+    "description": "删除集合时的确认消息"
+  },
+  "expandSidebar": {
+    "message": "展开侧边栏",
+    "description": "展开侧边栏按钮的提示文字"
+  },
+  "importCurlCommand": {
+    "message": "导入 cURL 命令",
+    "description": "cURL 导入模态框标题"
+  },
+  "import": {
+    "message": "导入",
+    "description": "导入按钮文字"
+  },
+  "newRequestDefault": {
+    "message": "新请求",
+    "description": "新请求的默认名称"
+  },
+  "welcomeTabTitle": {
+    "message": "欢迎",
+    "description": "欢迎标签页标题"
+  },
+  "invalidCurl": {
+    "message": "无效的 cURL 命令",
+    "description": "无效 cURL 输入的错误消息"
+  },
+  "saveToCollection": {
+    "message": "保存到集合",
+    "description": "保存到集合下拉框标题"
+  },
+  "noCollectionsFound": {
+    "message": "未找到集合",
+    "description": "当不存在集合时的提示消息"
+  },
+  "closeTab": {
+    "message": "关闭标签页",
+    "description": "关闭标签页按钮的提示文字"
+  },
+  "listAllTabs": {
+    "message": "列出所有标签页",
+    "description": "列出所有标签页按钮的提示文字"
+  },
+  "close": {
+    "message": "关闭",
+    "description": "右键菜单关闭选项"
+  },
+  "closeOthers": {
+    "message": "关闭其他",
+    "description": "右键菜单关闭其他选项"
+  },
+  "closeToRight": {
+    "message": "关闭右侧",
+    "description": "右键菜单关闭右侧选项"
+  },
+  "closeToLeft": {
+    "message": "关闭左侧",
+    "description": "右键菜单关闭左侧选项"
+  },
+  "closeAll": {
+    "message": "关闭全部",
+    "description": "右键菜单关闭全部选项"
+  },
+  "collapseSidebar": {
+    "message": "折叠侧边栏",
+    "description": "折叠侧边栏按钮提示"
+  },
+  "collections": {
+    "message": "集合",
+    "description": "集合标签页"
+  },
+  "captured": {
+    "message": "已捕获",
+    "description": "已捕获请求标签页"
+  },
+  "record": {
+    "message": "录制中",
+    "description": "录制状态标签"
+  },
+  "paused": {
+    "message": "已暂停",
+    "description": "暂停状态标签"
+  },
+  "clear": {
+    "message": "清空",
+    "description": "清空历史按钮文字"
+  },
+  "filterCapturedRequests": {
+    "message": "筛选已捕获的请求...",
+    "description": "筛选输入框占位符"
+  },
+  "deleteLog": {
+    "message": "删除日志",
+    "description": "删除日志按钮提示"
+  },
+  "noMatchingRequests": {
+    "message": "没有匹配的请求",
+    "description": "无匹配请求时的提示"
+  },
+  "requests": {
+    "message": "请求",
+    "description": "请求区域标题"
+  },
+  "collectionsSection": {
+    "message": "集合",
+    "description": "集合区域标题"
+  },
+  "empty": {
+    "message": "空",
+    "description": "集合为空时的提示"
+  },
+  "save": {
+    "message": "保存",
+    "description": "保存日志为请求按钮文字"
+  },
+  "copyCurl": {
+    "message": "复制 cURL",
+    "description": "复制 cURL 命令按钮文字"
+  },
+  "delete": {
+    "message": "删除",
+    "description": "删除按钮文字"
+  },
+  "rename": {
+    "message": "重命名",
+    "description": "重命名按钮文字"
+  },
+  "duplicate": {
+    "message": "复制",
+    "description": "复制请求按钮文字"
+  },
+  "responseBody": {
+    "message": "响应体",
+    "description": "响应体标签页"
+  },
+  "responseHeaders": {
+    "message": "响应头",
+    "description": "响应头标签页"
+  },
+  "requestFailed": {
+    "message": "请求失败",
+    "description": "请求失败时的错误消息"
+  },
+  "sendRequestToSeeResponse": {
+    "message": "发送请求以查看响应",
+    "description": "尚未响应时的提示消息"
+  },
+  "enterRequestUrl": {
+    "message": "输入请求 URL",
+    "description": "URL 输入框占位符"
+  },
+  "send": {
+    "message": "发送",
+    "description": "发送按钮文字"
+  },
+  "sending": {
+    "message": "发送中...",
+    "description": "加载时发送按钮文字"
+  },
+  "queryParameters": {
+    "message": "查询参数",
+    "description": "查询参数区域标签"
+  },
+  "requestHeaders": {
+    "message": "请求头",
+    "description": "请求头区域标签"
+  },
+  "authorizationConfig": {
+    "message": "授权配置即将到来",
+    "description": "授权配置区域提示"
+  },
+  "thisRequestDoesNotHaveABody": {
+    "message": "此请求没有请求体",
+    "description": "请求无请求体时的提示"
+  },
+  "formatJSON": {
+    "message": "格式化 JSON",
+    "description": "格式化 JSON 按钮文字"
+  },
+  "params": {
+    "message": "参数",
+    "description": "参数标签页"
+  },
+  "headers": {
+    "message": "请求头",
+    "description": "请求头标签页"
+  },
+  "body": {
+    "message": "请求体",
+    "description": "请求体标签页"
+  },
+  "auth": {
+    "message": "认证",
+    "description": "认证标签页"
+  },
+  "none": {
+    "message": "无",
+    "description": "无请求体类型选项"
+  },
+  "formData": {
+    "message": "表单数据",
+    "description": "表单数据请求体类型"
+  },
+  "xWwwFormUrlencoded": {
+    "message": "表单编码",
+    "description": "表单编码请求体类型"
+  },
+  "raw": {
+    "message": "原始数据",
+    "description": "原始数据请求体类型"
+  },
+  "invalidJSON": {
+    "message": "无效的 JSON",
+    "description": "JSON 无效时的错误消息"
+  },
+  "enterRequestBody": {
+    "message": "输入请求体...",
+    "description": "请求体文本域占位符"
+  },
+  "json": {
+    "message": "JSON",
+    "description": "JSON 语法选项"
+  },
+  "text": {
+    "message": "文本",
+    "description": "文本语法选项"
+  },
+  "html": {
+    "message": "HTML",
+    "description": "HTML 语法选项"
+  },
+  "xml": {
+    "message": "XML",
+    "description": "XML 语法选项"
+  },
+  "confirm": {
+    "message": "确认",
+    "description": "模态框确认按钮文字"
+  },
+  "cancel": {
+    "message": "取消",
+    "description": "模态框取消按钮文字"
+  },
+  "key": {
+    "message": "键",
+    "description": "键输入框标签"
+  },
+  "value": {
+    "message": "值",
+    "description": "值输入框标签"
+  },
+  "file": {
+    "message": "文件",
+    "description": "文件类型选项"
+  },
+  "remove": {
+    "message": "移除",
+    "description": "移除按钮提示"
+  },
+  "addItem": {
+    "message": "添加项目",
+    "description": "添加新项目按钮文字"
+  },
+  "startRecording": {
+    "message": "开始录制",
+    "description": "开始录制按钮提示"
+  },
+  "stopRecording": {
+    "message": "停止录制",
+    "description": "停止录制按钮提示"
+  },
+  "noRequestsFound": {
+    "message": "未找到请求",
+    "description": "未找到请求时的提示"
+  },
+  "recording": {
+    "message": "录制中...",
+    "description": "录制状态指示"
+  },
+  "filterRequests": {
+    "message": "筛选请求...",
+    "description": "筛选输入框占位符"
+  },
+  "openDashboard": {
+    "message": "打开面板",
+    "description": "打开面板按钮文字"
+  },
+  "pending": {
+    "message": "待定...",
+    "description": "待定状态文字"
+  }
+}

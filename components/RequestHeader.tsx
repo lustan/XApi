@@ -31,6 +31,11 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
         setIsMethodOpen(false);
     };
 
+    // 获取国际化文本
+    const enterRequestUrlText = chrome.i18n.getMessage("enterRequestUrl");
+    const sendText = chrome.i18n.getMessage("send");
+    const sendingText = chrome.i18n.getMessage("sending");
+
     return (
         <div className="border-b border-gray-200 bg-white p-2">
             <div className="flex space-x-0 shadow-sm rounded-md w-full relative">
@@ -66,7 +71,7 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
                     type="text"
                     value={request.url}
                     onChange={(e) => onRequestChange({ ...request, url: e.target.value })}
-                    placeholder="Enter Request URL"
+                    placeholder={enterRequestUrlText}
                     className="flex-1 bg-gray-50 hover:bg-white focus:bg-white border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 z-0 focus:z-10 font-mono text-gray-700 min-w-0 transition-all placeholder-gray-400"
                 />
 
@@ -76,7 +81,7 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
                     disabled={isSending}
                     className={`rounded-r-md px-6 py-2 text-sm font-bold text-white transition-all flex items-center flex-shrink-0 shadow-sm border border-transparent ${isSending ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 hover:shadow active:bg-green-800'}`}
                 >
-                    {isSending ? 'Sending...' : 'SEND'}
+                    {isSending ? sendingText : sendText}
                 </button>
             </div>
         </div>

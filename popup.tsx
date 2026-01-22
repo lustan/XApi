@@ -11,6 +11,16 @@ const Popup = () => {
   const [logs, setLogs] = useState<LoggedRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // 获取国际化文本
+  const startRecordingText = chrome.i18n.getMessage("startRecording");
+  const stopRecordingText = chrome.i18n.getMessage("stopRecording");
+  const noRequestsFoundText = chrome.i18n.getMessage("noRequestsFound");
+  const recordingText = chrome.i18n.getMessage("recording");
+  const filterRequestsText = chrome.i18n.getMessage("filterRequests");
+  const clearText = chrome.i18n.getMessage("clear");
+  const openDashboardText = chrome.i18n.getMessage("openDashboard");
+  const pendingText = chrome.i18n.getMessage("pending");
+
   useEffect(() => {
     // Load initial state
     if (chrome.storage && chrome.storage.local) {
@@ -66,7 +76,7 @@ const Popup = () => {
              <button 
                 onClick={toggleRecording}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isRecording ? 'bg-green-500' : 'bg-gray-600'}`}
-                title={isRecording ? "Stop Recording" : "Start Recording"}
+                title={isRecording ? stopRecordingText : startRecordingText}
             >
                 <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isRecording ? 'translate-x-5' : 'translate-x-1'}`} />
             </button>
@@ -79,7 +89,7 @@ const Popup = () => {
             type="text" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Filter requests..."
+            placeholder={filterRequestsText}
             className="w-full text-xs px-2 py-1.5 bg-white border border-gray-300 rounded focus:outline-none focus:border-green-500"
          />
       </div>
@@ -89,8 +99,8 @@ const Popup = () => {
         {validLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 bg-gray-50">
                 <span className="text-2xl">📡</span>
-                <span className="text-xs">No requests found</span>
-                {isRecording && !searchTerm && <span className="text-[10px] text-green-600 animate-pulse">Recording...</span>}
+                <span className="text-xs">{noRequestsFoundText}</span>
+                {isRecording && !searchTerm && <span className="text-[10px] text-green-600 animate-pulse">{recordingText}</span>}
             </div>
         ) : (
             <ul className="flex flex-col gap-px">
@@ -111,7 +121,7 @@ const Popup = () => {
                                     {formatTime(log.timestamp)}
                                 </span>
                                 <span className={`text-[10px] ${log.status >= 400 ? 'text-red-500' : 'text-gray-500'}`}>
-                                    {log.status > 0 ? log.status : 'Pending...'}
+                                    {log.status > 0 ? log.status : pendingText}
                                 </span>
                              </div>
                         </div>
@@ -132,13 +142,13 @@ const Popup = () => {
             onClick={clearLogs}
             className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium py-2 rounded transition-colors"
          >
-            Clear
+            {clearText}
          </button>
          <button 
             onClick={() => openDashboard()}
             className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 rounded transition-colors flex items-center justify-center"
          >
-            Open Dashboard
+            {openDashboardText}
          </button>
       </div>
     </div>

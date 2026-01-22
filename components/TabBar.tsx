@@ -18,6 +18,17 @@ interface TabBarProps {
 export const TabBar: React.FC<TabBarProps> = ({
     tabs, activeTabId, onTabClick, onTabClose, onTabReorder, onTabRename, onTabAction, collections, onSaveToCollection
 }) => {
+    // 获取国际化文本
+    const saveToCollectionText = chrome.i18n.getMessage("saveToCollection");
+    const noCollectionsText = chrome.i18n.getMessage("noCollectionsFound");
+    const closeTabText = chrome.i18n.getMessage("closeTab");
+    const listAllTabsText = chrome.i18n.getMessage("listAllTabs");
+    const closeText = chrome.i18n.getMessage("close");
+    const closeOthersText = chrome.i18n.getMessage("closeOthers");
+    const closeToRightText = chrome.i18n.getMessage("closeToRight");
+    const closeToLeftText = chrome.i18n.getMessage("closeToLeft");
+    const closeAllText = chrome.i18n.getMessage("closeAll");
+    
     // Dropdown state for "Save to Collection"
     const [saveDropdown, setSaveDropdown] = useState<{ isOpen: boolean, x: number, y: number, tabId: string } | null>(null);
 
@@ -174,8 +185,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                             onClick={() => onTabClick(tab.id)}
                             onContextMenu={(e) => handleContextMenu(e, tab.id)}
                             onDoubleClick={() => handleDoubleClick(tab)}
-                            className={`
-                                group flex items-center min-w-[140px] max-w-[200px] h-9 px-3 text-xs cursor-pointer select-none border-t border-l border-r rounded-t-md transition-all relative flex-shrink-0
+                            className={`group flex items-center min-w-[140px] max-w-[200px] h-9 px-3 text-xs cursor-pointer select-none border-t border-l border-r rounded-t-md transition-all relative flex-shrink-0
                                 ${activeTabId === tab.id 
                                     ? 'bg-white border-gray-200 border-b border-b-white text-gray-800 font-medium z-20' 
                                     : 'bg-gray-100 border-transparent border-b border-b-gray-200 hover:bg-gray-200 text-gray-500 z-10'}
@@ -210,7 +220,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                                     <button 
                                         onClick={(e) => handleSaveClick(e, tab.id)}
                                         className="p-0.5 rounded-full hover:bg-green-100 hover:text-green-600 text-gray-400"
-                                        title="Save to Collection"
+                                        title={saveToCollectionText}
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                     </button>
@@ -219,7 +229,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onTabClose(tab.id, e); }}
                                     className="p-0.5 rounded-full hover:bg-red-100 hover:text-red-600 text-gray-400"
-                                    title="Close Tab"
+                                    title={closeTabText}
                                 >
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
@@ -244,7 +254,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                     <button 
                         onClick={(e) => { e.stopPropagation(); setIsOverflowOpen(!isOverflowOpen); }}
                         className={`p-1.5 rounded hover:bg-gray-200 transition-colors ${isOverflowOpen ? 'bg-gray-200 text-gray-700' : 'text-gray-500'}`}
-                        title="List all tabs"
+                        title={listAllTabsText}
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </button>
@@ -279,11 +289,11 @@ export const TabBar: React.FC<TabBarProps> = ({
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                        Save to Collection
+                        {saveToCollectionText}
                     </div>
                     <div className="max-h-60 overflow-y-auto">
                         {collections.length === 0 && (
-                            <div className="px-3 py-2 text-gray-400 italic text-xs">No collections found</div>
+                            <div className="px-3 py-2 text-gray-400 italic text-xs">{noCollectionsText}</div>
                         )}
                         {collections.map(col => (
                             <div 
@@ -310,32 +320,32 @@ export const TabBar: React.FC<TabBarProps> = ({
                         className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
                         onClick={() => { onTabClose(contextMenu.tabId); setContextMenu(null); }}
                     >
-                        Close
+                        {closeText}
                     </button>
                     <button 
                         className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
                         onClick={() => { onTabAction('close-others', contextMenu.tabId); setContextMenu(null); }}
                     >
-                        Close Others
+                        {closeOthersText}
                     </button>
                     <button 
                         className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
                         onClick={() => { onTabAction('close-right', contextMenu.tabId); setContextMenu(null); }}
                     >
-                        Close to the Right
+                        {closeToRightText}
                     </button>
                      <button 
                         className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
                         onClick={() => { onTabAction('close-left', contextMenu.tabId); setContextMenu(null); }}
                     >
-                        Close to the Left
+                        {closeToLeftText}
                     </button>
                     <div className="border-t border-gray-100 my-1"></div>
                     <button 
                         className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50"
                         onClick={() => { onTabAction('close-all', contextMenu.tabId); setContextMenu(null); }}
                     >
-                        Close All
+                        {closeAllText}
                     </button>
                 </div>
             )}

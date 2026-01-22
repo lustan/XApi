@@ -40,6 +40,13 @@ const InputTableRow: React.FC<{
         setIsTypeOpen(false);
     };
 
+    // 获取国际化文本
+    const keyText = chrome.i18n.getMessage("key");
+    const valueText = chrome.i18n.getMessage("value");
+    const textText = chrome.i18n.getMessage("text");
+    const fileText = chrome.i18n.getMessage("file");
+    const removeText = chrome.i18n.getMessage("remove");
+
     return (
         <div className="flex items-start mb-1 group">
           <div className="w-8 flex justify-center pt-2">
@@ -54,7 +61,7 @@ const InputTableRow: React.FC<{
             <input 
               type="text" 
               value={item.key} 
-              placeholder="Key"
+              placeholder={keyText}
               onChange={(e) => onChange(item.id, 'key', e.target.value)}
               className="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white border border-transparent hover:border-gray-300 focus:border-green-500 rounded px-2 py-1.5 text-sm focus:outline-none transition-all placeholder-gray-400"
             />
@@ -73,7 +80,7 @@ const InputTableRow: React.FC<{
                 <input 
                     type="text" 
                     value={item.value} 
-                    placeholder="Value"
+                    placeholder={valueText}
                     onChange={(e) => onChange(item.id, 'value', e.target.value)}
                     className="w-full bg-gray-50 hover:bg-gray-100 focus:bg-white border border-transparent hover:border-gray-300 focus:border-green-500 rounded px-2 py-1.5 text-sm focus:outline-none transition-all placeholder-gray-400"
                 />
@@ -86,7 +93,7 @@ const InputTableRow: React.FC<{
                         onClick={() => setIsTypeOpen(!isTypeOpen)}
                         className="w-full h-full bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300 rounded px-2 flex items-center justify-between focus:border-green-500 transition-colors text-[10px] text-gray-600 font-medium"
                      >
-                         <span>{item.type === 'file' ? 'File' : 'Text'}</span>
+                         <span>{item.type === 'file' ? fileText : textText}</span>
                          <svg className={`fill-current h-2 w-2 text-gray-400 transform transition-transform ${isTypeOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                      </button>
 
@@ -96,13 +103,13 @@ const InputTableRow: React.FC<{
                                 onClick={() => handleTypeSelect('text')} 
                                 className={`text-left px-3 py-1.5 text-[10px] hover:bg-green-50 hover:text-green-700 ${item.type !== 'file' ? 'text-green-600 font-bold' : 'text-gray-700'}`}
                             >
-                                Text
+                                {textText}
                             </button>
                             <button 
                                 onClick={() => handleTypeSelect('file')} 
                                 className={`text-left px-3 py-1.5 text-[10px] hover:bg-green-50 hover:text-green-700 ${item.type === 'file' ? 'text-green-600 font-bold' : 'text-gray-700'}`}
                             >
-                                File
+                                {fileText}
                             </button>
                          </div>
                      )}
@@ -114,7 +121,7 @@ const InputTableRow: React.FC<{
                 <button 
                 onClick={() => onRemove(item.id)} 
                 className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Remove"
+                title={removeText}
                 >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
@@ -168,6 +175,11 @@ export const InputTable: React.FC<InputTableProps> = ({ items, onChange, title, 
     onChange([...items, { id: generateId(), key: '', value: '', enabled: true, type: 'text' }]);
   };
 
+  // 获取国际化文本
+  const keyText = chrome.i18n.getMessage("key");
+  const valueText = chrome.i18n.getMessage("value");
+  const addItemText = chrome.i18n.getMessage("addItem");
+
   return (
     <div className="w-full flex flex-col">
       {!hideTitle && title && <div className="text-sm font-bold text-gray-700 mb-2">{title}</div>}
@@ -175,8 +187,8 @@ export const InputTable: React.FC<InputTableProps> = ({ items, onChange, title, 
       {/* Header */}
       <div className="flex border-b border-gray-200 pb-1 mb-1 text-xs font-semibold text-gray-500">
         <div className="w-8 text-center"></div>
-        <div className="flex-1 px-1">Key</div>
-        <div className="flex-1 px-1">Value</div>
+        <div className="flex-1 px-1">{keyText}</div>
+        <div className="flex-1 px-1">{valueText}</div>
         <div className="w-8"></div>
       </div>
 
@@ -201,7 +213,7 @@ export const InputTable: React.FC<InputTableProps> = ({ items, onChange, title, 
             className="text-xs font-medium text-gray-500 hover:text-green-600 flex items-center transition-colors"
           >
               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              Add Item
+              {addItemText}
           </button>
       </div>
     </div>
