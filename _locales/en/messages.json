@@ -1,0 +1,378 @@
+{
+  "extName": {
+    "message": "XApi HTTP Client - Api Testing Tool",
+    "description": "Extension name displayed in Chrome Web Store and extension management page"
+  },
+  "extDescription": {
+    "message": "Intercept, debug & replay HTTP requests. A comprehensive API client with collections and cURL support inside Chrome DevTools.",
+    "description": "Extension description"
+  },
+  "welcomeTitle": {
+    "message": "XApi",
+    "description": "Main welcome screen title"
+  },
+  "welcomeSubtitle": {
+    "message": "Intercept, debug, and replay API requests with professional ease.",
+    "description": "Subtitle on welcome screen"
+  },
+  "importedRequest": {
+    "message": "Imported Request",
+    "description": "Default name for imported request"
+  },
+  "newRequest": {
+    "message": "New Request",
+    "description": "Button text for creating new request"
+  },
+  "newRequestDesc": {
+    "message": "Start a fresh API call from scratch",
+    "description": "Description for new request option"
+  },
+  "newCollection": {
+    "message": "New Collection",
+    "description": "Button text for creating new collection"
+  },
+  "newCollectionDesc": {
+    "message": "Organize requests into folders",
+    "description": "Description for new collection option"
+  },
+  "importCurl": {
+    "message": "Import cURL",
+    "description": "Button text for importing cURL command"
+  },
+  "importCurlDesc": {
+    "message": "Quickly import from clipboard",
+    "description": "Description for import cURL option"
+  },
+  "runner": {
+    "message": "Runner",
+    "description": "Runner feature name"
+  },
+  "runnerDesc": {
+    "message": "Automated testing (Coming Soon)",
+    "description": "Description for runner feature"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings menu item"
+  },
+  "githubRepository": {
+    "message": "GitHub Repository",
+    "description": "GitHub repository link text"
+  },
+  "sendFeedback": {
+    "message": "Send Feedback",
+    "description": "Send feedback link text"
+  },
+  "resetWorkspace": {
+    "message": "Reset Workspace",
+    "description": "Reset workspace button text"
+  },
+  "newCollectionAction": {
+    "message": "New Collection",
+    "description": "Action to create new collection"
+  },
+  "newRequestAction": {
+    "message": "New Request",
+    "description": "Action to create new request"
+  },
+  "importCurlAction": {
+    "message": "Import cURL",
+    "description": "Action to import cURL"
+  },
+  "clearAllDataConfirm": {
+    "message": "Are you sure you want to delete all collections, requests and history? This cannot be undone.",
+    "description": "Confirmation message when clearing all data"
+  },
+  "deleteCollectionConfirm": {
+    "message": "Delete this collection?",
+    "description": "Confirmation message when deleting a collection"
+  },
+  "expandSidebar": {
+    "message": "Expand Sidebar",
+    "description": "Tooltip for expand sidebar button"
+  },
+  "importCurlCommand": {
+    "message": "Import cURL Command",
+    "description": "Title for cURL import modal"
+  },
+  "import": {
+    "message": "Import",
+    "description": "Import button text"
+  },
+  "newRequestDefault": {
+    "message": "New Request",
+    "description": "Default name for new request"
+  },
+  "welcomeTabTitle": {
+    "message": "Welcome",
+    "description": "Title for welcome tab"
+  },
+  "invalidCurl": {
+    "message": "Invalid cURL command",
+    "description": "Error message for invalid cURL input"
+  },
+  "saveToCollection": {
+    "message": "Save to Collection",
+    "description": "Title for save to collection dropdown"
+  },
+  "noCollectionsFound": {
+    "message": "No collections found",
+    "description": "Message when no collections exist"
+  },
+  "closeTab": {
+    "message": "Close Tab",
+    "description": "Tooltip for close tab button"
+  },
+  "listAllTabs": {
+    "message": "List all tabs",
+    "description": "Tooltip for list all tabs button"
+  },
+  "close": {
+    "message": "Close",
+    "description": "Context menu close option"
+  },
+  "closeOthers": {
+    "message": "Close Others",
+    "description": "Context menu close others option"
+  },
+  "closeToRight": {
+    "message": "Close to the Right",
+    "description": "Context menu close to the right option"
+  },
+  "closeToLeft": {
+    "message": "Close to the Left",
+    "description": "Context menu close to the left option"
+  },
+  "closeAll": {
+    "message": "Close All",
+    "description": "Context menu close all option"
+  },
+  "collapseSidebar": {
+    "message": "Collapse Sidebar",
+    "description": "Button tooltip for collapsing sidebar"
+  },
+  "collections": {
+    "message": "Collections",
+    "description": "Tab label for collections"
+  },
+  "captured": {
+    "message": "Captured",
+    "description": "Tab label for captured requests"
+  },
+  "record": {
+    "message": "RECORDING",
+    "description": "Label for recording status"
+  },
+  "paused": {
+    "message": "PAUSED",
+    "description": "Label for paused status"
+  },
+  "clear": {
+    "message": "Clear",
+    "description": "Button text for clearing history"
+  },
+  "filterCapturedRequests": {
+    "message": "Filter captured requests...",
+    "description": "Placeholder for filter input"
+  },
+  "deleteLog": {
+    "message": "Delete Log",
+    "description": "Button tooltip for deleting log"
+  },
+  "noMatchingRequests": {
+    "message": "No matching requests",
+    "description": "Message when no requests match filter"
+  },
+  "requests": {
+    "message": "Requests",
+    "description": "Section header for requests"
+  },
+  "collectionsSection": {
+    "message": "Collections",
+    "description": "Section header for collections"
+  },
+  "empty": {
+    "message": "Empty",
+    "description": "Text shown when collection is empty"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Button text for saving log as request"
+  },
+  "copyCurl": {
+    "message": "Copy cURL",
+    "description": "Button text for copying cURL command"
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Button text for deleting item"
+  },
+  "rename": {
+    "message": "Rename",
+    "description": "Button text for renaming item"
+  },
+  "duplicate": {
+    "message": "Duplicate",
+    "description": "Button text for duplicating request"
+  },
+  "responseBody": {
+    "message": "BODY",
+    "description": "Tab label for response body"
+  },
+  "responseHeaders": {
+    "message": "HEADERS",
+    "description": "Tab label for response headers"
+  },
+  "requestFailed": {
+    "message": "Request Failed",
+    "description": "Error message when request fails"
+  },
+  "sendRequestToSeeResponse": {
+    "message": "Send a request to see the response",
+    "description": "Message when no response yet"
+  },
+  "enterRequestUrl": {
+    "message": "Enter Request URL",
+    "description": "Placeholder for URL input field"
+  },
+  "send": {
+    "message": "SEND",
+    "description": "Send button text"
+  },
+  "sending": {
+    "message": "Sending...",
+    "description": "Sending button text when loading"
+  },
+  "queryParameters": {
+    "message": "Query Parameters",
+    "description": "Label for query parameters section"
+  },
+  "requestHeaders": {
+    "message": "Request Headers",
+    "description": "Label for request headers section"
+  },
+  "authorizationConfig": {
+    "message": "Authorization config coming soon",
+    "description": "Message for authorization config section"
+  },
+  "thisRequestDoesNotHaveABody": {
+    "message": "This request does not have a body",
+    "description": "Message when request has no body"
+  },
+  "formatJSON": {
+    "message": "Format JSON",
+    "description": "Button text to format JSON"
+  },
+  "params": {
+    "message": "Params",
+    "description": "Tab label for parameters"
+  },
+  "headers": {
+    "message": "Headers",
+    "description": "Tab label for headers"
+  },
+  "body": {
+    "message": "Body",
+    "description": "Tab label for body"
+  },
+  "auth": {
+    "message": "Auth",
+    "description": "Tab label for authentication"
+  },
+  "none": {
+    "message": "none",
+    "description": "Option for no body type"
+  },
+  "formData": {
+    "message": "form-data",
+    "description": "Option for form data body type"
+  },
+  "xWwwFormUrlencoded": {
+    "message": "x-www-form-urlencoded",
+    "description": "Option for form url encoded body type"
+  },
+  "raw": {
+    "message": "raw",
+    "description": "Option for raw body type"
+  },
+  "invalidJSON": {
+    "message": "Invalid JSON",
+    "description": "Error message for invalid JSON"
+  },
+  "enterRequestBody": {
+    "message": "Enter request body...",
+    "description": "Placeholder for request body textarea"
+  },
+  "json": {
+    "message": "JSON",
+    "description": "JSON syntax option"
+  },
+  "text": {
+    "message": "Text",
+    "description": "Text syntax option"
+  },
+  "html": {
+    "message": "HTML",
+    "description": "HTML syntax option"
+  },
+  "xml": {
+    "message": "XML",
+    "description": "XML syntax option"
+  },
+  "confirm": {
+    "message": "Confirm",
+    "description": "Confirm button text in modal"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button text in modal"
+  },
+  "key": {
+    "message": "Key",
+    "description": "Label for key input field"
+  },
+  "value": {
+    "message": "Value",
+    "description": "Label for value input field"
+  },
+  "file": {
+    "message": "File",
+    "description": "File type option"
+  },
+  "remove": {
+    "message": "Remove",
+    "description": "Tooltip for remove button"
+  },
+  "addItem": {
+    "message": "Add Item",
+    "description": "Button text for adding new item"
+  },
+  "startRecording": {
+    "message": "Start Recording",
+    "description": "Tooltip for start recording button"
+  },
+  "stopRecording": {
+    "message": "Stop Recording",
+    "description": "Tooltip for stop recording button"
+  },
+  "noRequestsFound": {
+    "message": "No requests found",
+    "description": "Message when no requests are found"
+  },
+  "recording": {
+    "message": "Recording...",
+    "description": "Recording status indicator"
+  },
+  "filterRequests": {
+    "message": "Filter requests...",
+    "description": "Placeholder for filter input"
+  },
+  "openDashboard": {
+    "message": "Open Dashboard",
+    "description": "Open dashboard button text"
+  },
+  "pending": {
+    "message": "Pending...",
+    "description": "Pending status text"
+  }
+}

@@ -133,6 +133,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
+  // 获取国际化文本
+  const importCurlText = chrome.i18n.getMessage("importCurl");
+  const newCollectionText = chrome.i18n.getMessage("newCollection");
+  const newRequestText = chrome.i18n.getMessage("newRequest");
+  const settingsText = chrome.i18n.getMessage("settings");
+  const collapseSidebarText = chrome.i18n.getMessage("collapseSidebar");
+  const collectionsText = chrome.i18n.getMessage("collections");
+  const capturedText = chrome.i18n.getMessage("captured");
+  const recordText = chrome.i18n.getMessage("record");
+  const pausedText = chrome.i18n.getMessage("paused");
+  const clearText = chrome.i18n.getMessage("clear");
+  const filterCapturedRequestsText = chrome.i18n.getMessage("filterCapturedRequests");
+  const deleteLogText = chrome.i18n.getMessage("deleteLog");
+  const noMatchingRequestsText = chrome.i18n.getMessage("noMatchingRequests");
+  const requestsText = chrome.i18n.getMessage("requests");
+  const collectionsSectionText = chrome.i18n.getMessage("collectionsSection");
+  const emptyText = chrome.i18n.getMessage("empty");
+  const saveText = chrome.i18n.getMessage("save");
+  const copyCurlText = chrome.i18n.getMessage("copyCurl");
+  const deleteText = chrome.i18n.getMessage("delete");
+  const renameText = chrome.i18n.getMessage("rename");
+  const duplicateText = chrome.i18n.getMessage("duplicate");
+  const githubRepositoryText = chrome.i18n.getMessage("githubRepository");
+  const sendFeedbackText = chrome.i18n.getMessage("sendFeedback");
+  const resetWorkspaceText = chrome.i18n.getMessage("resetWorkspace");
+
   return (
     <div className="flex flex-col h-full bg-gray-50 border-r border-gray-200 w-72 flex-shrink-0 relative select-none">
       {/* Header height is h-9 (36px) to match TabBar */}
@@ -141,15 +167,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Logo size={18} />
          </div>
          <div className="flex items-center space-x-1">
-            <button onClick={onImportCurl} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Import cURL"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeWidth={2}/></svg></button>
-            <button onClick={onCreateCollection} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="New Collection"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeWidth={2}/></svg></button>
-            <button onClick={onCreateRequest} className="p-1 text-green-500 hover:text-green-600 hover:bg-green-50 rounded" title="New Request"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth={2}/></svg></button>
+            <button onClick={onImportCurl} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title={importCurlText}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeWidth={2}/></svg></button>
+            <button onClick={onCreateCollection} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title={newCollectionText}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" strokeWidth={2}/></svg></button>
+            <button onClick={onCreateRequest} className="p-1 text-green-500 hover:text-green-600 hover:bg-green-50 rounded" title={newRequestText}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth={2}/></svg></button>
 
             <div className="relative" ref={settingsRef}>
                 <button
                     onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
                     className={`p-1 rounded transition-colors ${isSettingsOpen ? 'bg-gray-100 text-gray-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
-                    title="Settings"
+                    title={settingsText}
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeWidth={2}/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" strokeWidth={2}/></svg>
                 </button>
@@ -162,11 +188,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <svg className="w-3.5 h-3.5 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
                             </svg>
-                            GitHub Repository
+                            {githubRepositoryText}
                         </a>
                         <a href={APP_CONFIG.FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className="flex items-center w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-green-50 transition-colors">
                             <svg className="w-3.5 h-3.5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" strokeWidth={2}/></svg>
-                            Send Feedback
+                            {sendFeedbackText}
                         </a>
                         <div className="h-px bg-gray-100 my-1"></div>
                         <button
@@ -174,22 +200,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             className="flex items-center w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
                         >
                             <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>
-                            Reset Workspace
+                            {resetWorkspaceText}
                         </button>
                     </div>
                 )}
             </div>
 
-            <button onClick={onCollapseSidebar} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Collapse Sidebar">
+            <button onClick={onCollapseSidebar} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title={collapseSidebarText}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 19l-7-7 7-7m8 14l-7-7 7-7" strokeWidth={2}/></svg>
             </button>
          </div>
       </div>
 
       <div className="flex text-xs font-bold border-b border-gray-200 bg-white uppercase tracking-wider">
-        <button onClick={() => onTabChange('collections')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'collections' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30' : 'text-gray-400 hover:text-gray-600'}`}>Collections</button>
+        <button onClick={() => onTabChange('collections')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'collections' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30' : 'text-gray-400 hover:text-gray-600'}`}>{collectionsText}</button>
         <button onClick={() => onTabChange('history')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'history' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30' : 'text-gray-400 hover:text-gray-600'}`}>
-            Captured ({history.length})
+            {capturedText} ({history.length})
         </button>
       </div>
 
@@ -200,14 +226,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                  <div className="flex items-center justify-between">
                     <button onClick={onToggleRecording} className={`flex items-center px-2 py-0.5 rounded text-[10px] font-bold border shadow-sm ${isRecording ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-gray-400 border-gray-200'}`}>
                         <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
-                        {isRecording ? 'RECORDING' : 'PAUSED'}
+                        {isRecording ? recordText : pausedText}
                     </button>
-                    <button onClick={onClearHistory} className="text-[10px] text-gray-400 hover:text-red-500 font-bold uppercase">Clear</button>
+                    <button onClick={onClearHistory} className="text-[10px] text-gray-400 hover:text-red-500 font-bold uppercase">{clearText}</button>
                  </div>
                  <div className="relative">
                     <input
                         type="text"
-                        placeholder="Filter captured requests..."
+                        placeholder={filterCapturedRequestsText}
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                         className="w-full text-[10px] pl-7 pr-2 py-1 bg-white border border-gray-200 rounded focus:outline-none focus:border-indigo-400 transition-colors"
@@ -245,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                              <button
                                 onClick={(e) => { e.stopPropagation(); onDeleteLog(item.id); }}
                                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all"
-                                title="Delete Log"
+                                title={deleteLogText}
                              >
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>
                              </button>
@@ -257,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                  );
              })}
              {filteredHistory.length === 0 && history.length > 0 && (
-                 <div className="p-4 text-center text-[11px] text-gray-400 italic">No matching requests</div>
+                 <div className="p-4 text-center text-[11px] text-gray-400 italic">{noMatchingRequestsText}</div>
              )}
           </div>
         ) : (
@@ -268,7 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onDrop={(e) => handleDrop(e, null)}
                 onDragLeave={handleDragLeave}
             >
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1">Requests</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1">{requestsText}</div>
                 <div className="space-y-0.5">
                     {rootRequests.map(renderRequestItem)}
                 </div>
@@ -277,7 +303,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="h-px bg-gray-200 my-2 mx-4" />
 
             <div className="flex flex-col p-2 space-y-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1">Collections</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1">{collectionsSectionText}</div>
                 {collections.map(col => (
                     <div
                         key={col.id}
@@ -298,7 +324,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         {!col.collapsed && (
                             <div className="ml-5 pl-2 border-l border-gray-200 py-0.5 space-y-0.5 mr-1">
                                 {col.requests.map(renderRequestItem)}
-                                {col.requests.length === 0 && <div className="text-[10px] text-gray-400 italic py-1 pl-2">Empty</div>}
+                                {col.requests.length === 0 && <div className="text-[10px] text-gray-400 italic py-1 pl-2">{emptyText}</div>}
                             </div>
                         )}
                     </div>
@@ -312,28 +338,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="fixed bg-white border border-gray-200 shadow-xl rounded-md py-1.5 z-[100] w-52 animate-fadeIn border-t-2 border-t-indigo-500" style={{ top: contextMenu.y, left: contextMenu.x }}>
               {contextMenu.type === 'log' && (
                   <>
-                      <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { onMoveRequest(contextMenu.id, null); setContextMenu(null); }}><svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth={2}/></svg>Save</button>
-                      <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { copyToClipboard(generateCurl(contextMenu.data)); setContextMenu(null); }}><svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth={2}/></svg>Copy cURL</button>
-                      <button className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center" onClick={() => { onDeleteLog(contextMenu.id); setContextMenu(null); }}><svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>Delete</button>
+                      <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { onMoveRequest(contextMenu.id, null); setContextMenu(null); }}><svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth={2}/></svg>{saveText}</button>
+                      <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { copyToClipboard(generateCurl(contextMenu.data)); setContextMenu(null); }}><svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth={2}/></svg>{copyCurlText}</button>
+                      <button className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center" onClick={() => { onDeleteLog(contextMenu.id); setContextMenu(null); }}><svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>{deleteText}</button>
                   </>
               )}
               {contextMenu.type === 'request' && (
                   <>
                       <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { copyToClipboard(generateCurlFromRequest(contextMenu.data)); setContextMenu(null); }}>
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth={2}/></svg>
-                        Copy cURL
+                        {copyCurlText}
                       </button>
                       <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { setEditingId(contextMenu.id); setEditingType('request'); setEditName(contextMenu.data.name); setContextMenu(null); }}>
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" strokeWidth={2}/></svg>
-                        Rename
+                        {renameText}
                       </button>
                       <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { onDuplicateRequest(contextMenu.id); setContextMenu(null); }}>
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" strokeWidth={2}/></svg>
-                        Duplicate
+                        {duplicateText}
                       </button>
                       <button className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center" onClick={() => { onDeleteRequest(contextMenu.data); setContextMenu(null); }}>
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>
-                        Delete
+                        {deleteText}
                       </button>
                   </>
               )}
@@ -341,11 +367,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <>
                       <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { setEditingId(contextMenu.id); setEditingType('collection'); setEditName(contextMenu.data.name); setContextMenu(null); }}>
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" strokeWidth={2}/></svg>
-                        Rename
+                        {renameText}
                       </button>
                       <button className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center" onClick={() => { onDeleteCollection(contextMenu.id); setContextMenu(null); }}>
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>
-                        Delete
+                        {deleteText}
                       </button>
                   </>
               )}

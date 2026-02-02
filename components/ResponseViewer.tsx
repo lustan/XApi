@@ -11,6 +11,12 @@ interface ResponseViewerProps {
 export const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, error }) => {
   const [activeTab, setActiveTab] = useState<'body' | 'headers'>('body');
 
+  // 获取国际化文本
+  const bodyText = chrome.i18n.getMessage("responseBody");
+  const headersText = chrome.i18n.getMessage("responseHeaders");
+  const requestFailedText = chrome.i18n.getMessage("requestFailed");
+  const sendRequestText = chrome.i18n.getMessage("sendRequestToSeeResponse");
+
   const getStatusColor = (status: number) => {
       if (status >= 200 && status < 300) return 'text-green-600';
       if (status >= 400) return 'text-red-600';
@@ -43,7 +49,7 @@ export const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, error 
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              BODY
+              {bodyText}
             </button>
             <button
               onClick={() => setActiveTab('headers')}
@@ -53,7 +59,7 @@ export const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, error 
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              HEADERS
+              {headersText}
             </button>
           </div>
 
@@ -85,7 +91,7 @@ export const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, error 
         {error && (
             <div className="flex items-center justify-center h-full text-red-600 p-4">
                 <div className="text-center">
-                    <div className="text-lg font-bold mb-1">Request Failed</div>
+                    <div className="text-lg font-bold mb-1">{requestFailedText}</div>
                     <p>{error}</p>
                 </div>
             </div>
@@ -93,7 +99,7 @@ export const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, error 
         
         {!response && !error && (
             <div className="flex items-center justify-center h-full text-gray-300 text-sm italic">
-                Send a request to see the response
+                {sendRequestText}
             </div>
         )}
 

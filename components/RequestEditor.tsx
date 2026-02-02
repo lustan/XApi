@@ -30,7 +30,13 @@ const BodySyntaxSelect = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const options = ['JSON', 'Text', 'HTML', 'XML'];
+    // 获取国际化文本
+    const jsonText = chrome.i18n.getMessage("json");
+    const textText = chrome.i18n.getMessage("text");
+    const htmlText = chrome.i18n.getMessage("html");
+    const xmlText = chrome.i18n.getMessage("xml");
+
+    const options = [jsonText, textText, htmlText, xmlText];
 
     return (
         <div className="relative" ref={ref}>
@@ -38,7 +44,7 @@ const BodySyntaxSelect = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className="bg-white border border-gray-200 rounded px-3 py-1 text-xs text-gray-600 focus:outline-none focus:border-green-500 flex items-center hover:bg-gray-50 transition-colors w-24 justify-between"
             >
-                <span>{value || 'JSON'}</span>
+                <span>{value || jsonText}</span>
                 <svg className={`fill-current h-2 w-2 text-gray-400 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
             </button>
             {isOpen && (
@@ -61,6 +67,24 @@ const BodySyntaxSelect = ({
 export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequestChange }) => {
   const [activeTab, setActiveTab] = useState<'params' | 'headers' | 'body' | 'auth'>('params');
   const [bodyType, setBodyType] = useState<HttpRequest['bodyType']>(request.bodyType || 'none');
+
+  // 获取国际化文本
+  const paramsText = chrome.i18n.getMessage("params");
+  const headersText = chrome.i18n.getMessage("headers");
+  const bodyText = chrome.i18n.getMessage("body");
+  const authText = chrome.i18n.getMessage("auth");
+  const queryParametersText = chrome.i18n.getMessage("queryParameters");
+  const requestHeadersText = chrome.i18n.getMessage("requestHeaders");
+  const authorizationConfigText = chrome.i18n.getMessage("authorizationConfig");
+  const thisRequestDoesNotHaveABodyText = chrome.i18n.getMessage("thisRequestDoesNotHaveABody");
+  const formatJSONText = chrome.i18n.getMessage("formatJSON");
+  const invalidJSONText = chrome.i18n.getMessage("invalidJSON");
+  const enterRequestBodyText = chrome.i18n.getMessage("enterRequestBody");
+  const noneText = chrome.i18n.getMessage("none");
+  const formDataText = chrome.i18n.getMessage("formData");
+  const xWwwFormUrlencodedText = chrome.i18n.getMessage("xWwwFormUrlencoded");
+  const rawText = chrome.i18n.getMessage("raw");
+  const jsonText = chrome.i18n.getMessage("json");
 
   // Sync internal bodyType state when switching requests
   useEffect(() => {
@@ -85,7 +109,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
           const formatted = JSON.stringify(parsed, null, 2);
           onRequestChange({ ...request, bodyRaw: formatted });
       } catch (e) {
-          alert('Invalid JSON');
+          alert(invalidJSONText);
       }
   };
   
@@ -94,20 +118,20 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
       
       {/* Tabs */}
       <div className="flex border-b border-gray-200 px-2 mt-1">
-        {['params', 'headers', 'body', 'auth'].map(tab => (
+        {[{ id: 'params', text: paramsText }, { id: 'headers', text: headersText }, { id: 'body', text: bodyText }, { id: 'auth', text: authText }].map(({ id, text }) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab as any)}
+            key={id}
+            onClick={() => setActiveTab(id as any)}
             className={`px-4 py-2 text-xs font-bold tracking-wide uppercase border-b-2 transition-colors mb-[-1px] ${
-              activeTab === tab 
+              activeTab === id 
                 ? 'border-green-600 text-green-700' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
-            {tab}
-            {tab === 'params' && request.params.some(p=>p.enabled && p.key) && <span className="ml-1 text-green-500">•</span>}
-            {tab === 'headers' && request.headers.some(h=>h.enabled && h.key) && <span className="ml-1 text-green-500">•</span>}
-            {tab === 'body' && request.bodyType !== 'none' && <span className="ml-1 text-green-500">•</span>}
+            {text}
+            {id === 'params' && request.params.some(p=>p.enabled && p.key) && <span className="ml-1 text-green-500">•</span>}
+            {id === 'headers' && request.headers.some(h=>h.enabled && h.key) && <span className="ml-1 text-green-500">•</span>}
+            {id === 'body' && request.bodyType !== 'none' && <span className="ml-1 text-green-500">•</span>}
           </button>
         ))}
       </div>
@@ -116,7 +140,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
       <div className="flex-1 overflow-y-auto p-4 bg-white relative">
         {activeTab === 'params' && (
            <div>
-               <div className="mb-2 text-xs text-gray-500">Query Parameters</div>
+               <div className="mb-2 text-xs text-gray-500">{queryParametersText}</div>
                {/* Params don't need the Type selector (Text/File) */}
                <InputTable items={request.params} onChange={handleParamsChange} hideTitle withTypeSelector={false} />
            </div>
@@ -124,14 +148,14 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
 
         {activeTab === 'headers' && (
            <div>
-              <div className="mb-2 text-xs text-gray-500">Request Headers</div>
+              <div className="mb-2 text-xs text-gray-500">{requestHeadersText}</div>
               <InputTable items={request.headers} onChange={(headers) => onRequestChange({ ...request, headers })} hideTitle withTypeSelector={false} />
            </div>
         )}
 
         {activeTab === 'auth' && (
             <div className="flex items-center justify-center h-32 text-gray-400 text-sm border border-dashed border-gray-300 rounded">
-                Authorization config coming soon
+                {authorizationConfigText}
             </div>
         )}
 
@@ -139,11 +163,11 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
           <div className="h-full flex flex-col">
              {/* Body Type Selectors */}
              <div className="flex space-x-4 mb-4 text-xs font-medium text-gray-600 border-b border-gray-100 pb-2">
-                {[
-                    {id: 'none', label: 'none'},
-                    {id: 'form-data', label: 'form-data'},
-                    {id: 'x-www-form-urlencoded', label: 'x-www-form-urlencoded'},
-                    {id: 'raw', label: 'raw'}
+                 {[
+                    {id: 'none', label: noneText},
+                    {id: 'form-data', label: formDataText},
+                    {id: 'x-www-form-urlencoded', label: xWwwFormUrlencodedText},
+                    {id: 'raw', label: rawText}
                 ].map(t => (
                     <label key={t.id} className={`flex items-center cursor-pointer hover:text-gray-900 ${bodyType === t.id ? 'text-green-600 font-bold' : ''}`}>
                     <input 
@@ -161,7 +185,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
              <div className="flex-1 overflow-y-auto">
                  {bodyType === 'none' && (
                     <div className="flex h-full items-center justify-center text-gray-400 text-sm">
-                        This request does not have a body
+                        {thisRequestDoesNotHaveABodyText}
                     </div>
                  )}
 
@@ -183,12 +207,12 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
                                     onClick={handleFormatJSON}
                                     className="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded border border-gray-200 transition-colors"
                                 >
-                                    Format JSON
+                                    {formatJSONText}
                                 </button>
                            </div>
                            
                            <BodySyntaxSelect 
-                                value={request.bodyRawType || 'JSON'}
+                                value={request.bodyRawType || jsonText}
                                 onChange={(val) => onRequestChange({ ...request, bodyRawType: val })}
                            />
                        </div>
@@ -196,7 +220,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
                          value={request.bodyRaw}
                          onChange={(e) => onRequestChange({ ...request, bodyRaw: e.target.value })}
                          className="flex-1 w-full bg-gray-50 focus:bg-white border border-gray-200 rounded p-3 font-mono text-xs resize-none focus:outline-none focus:border-green-500 transition-colors placeholder-gray-400"
-                         placeholder='Enter request body...'
+                         placeholder={enterRequestBodyText}
                        />
                    </div>
                  )}

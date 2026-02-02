@@ -4,6 +4,7 @@
   "name": "XApi HTTP Client - Api Testing Tool",
   "version": "1.1.0",
   "description": "Intercept, debug & replay HTTP requests. A comprehensive API client with collections and cURL support inside Chrome DevTools.",
+  "default_locale": "en",
   "permissions": [
     "storage",
     "contextMenus",

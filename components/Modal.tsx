@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from './Button';
 
@@ -13,8 +12,12 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ 
-  isOpen, onClose, title, children, onConfirm, confirmText = "Confirm", confirmDisabled = false 
+  isOpen, onClose, title, children, onConfirm, confirmText, confirmDisabled = false 
 }) => {
+  // 获取国际化文本
+  const confirmTextDefault = chrome.i18n.getMessage("confirm");
+  const cancelText = chrome.i18n.getMessage("cancel");
+
   if (!isOpen) return null;
 
   return (
@@ -33,9 +36,9 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 flex justify-end space-x-2">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={onClose}>{cancelText}</Button>
           {onConfirm && (
-            <Button onClick={onConfirm} disabled={confirmDisabled}>{confirmText}</Button>
+            <Button onClick={onConfirm} disabled={confirmDisabled}>{confirmText || confirmTextDefault}</Button>
           )}
         </div>
       </div>

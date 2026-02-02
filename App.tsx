@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { RequestHeader } from './components/RequestHeader';
@@ -19,7 +18,7 @@ const FORBIDDEN_HEADERS = [
 const createNewRequest = (collectionId?: string): HttpRequest => ({
   id: generateId(),
   collectionId,
-  name: 'New Request',
+  name: chrome.i18n.getMessage("newRequestDefault"),
   url: '',
   method: 'GET',
   headers: [],
@@ -58,7 +57,7 @@ const convertLogToRequest = (log: LoggedRequest): HttpRequest => {
 };
 
 const App: React.FC = () => {
-  const [tabs, setTabs] = useState<TabItem[]>([{ id: 'welcome', type: 'welcome', title: 'Welcome' }]);
+  const [tabs, setTabs] = useState<TabItem[]>([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
   const [activeTabId, setActiveTabId] = useState<string>('welcome');
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('history');
   const [history, setHistory] = useState<LoggedRequest[]>([]);
@@ -135,7 +134,7 @@ const App: React.FC = () => {
       if (e) e.stopPropagation();
       const newTabs = tabs.filter(t => t.id !== id);
       if (newTabs.length === 0) {
-          setTabs([{ id: 'welcome', type: 'welcome', title: 'Welcome' }]);
+          setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
           setActiveTabId('welcome');
       } else {
           setTabs(newTabs);
@@ -310,7 +309,7 @@ const App: React.FC = () => {
   const handleImportCurlConfirm = () => {
     const parsed = parseCurl(curlInput);
     if (parsed) {
-        let smartName = 'Imported Request';
+        let smartName = chrome.i18n.getMessage("importedRequest");
         if (parsed.url) {
             try {
                 const urlObj = new URL(parsed.url);
@@ -324,16 +323,18 @@ const App: React.FC = () => {
         openRequestInTab(newReq);
         setIsCurlModalOpen(false);
         setCurlInput('');
-    } else { alert('Invalid cURL command'); }
+    } else { 
+        alert(chrome.i18n.getMessage("invalidCurl")); 
+    }
   };
 
   const handleClearAllData = () => {
-    if (confirm('Are you sure you want to delete all collections, requests and history? This cannot be undone.')) {
+    if (confirm(chrome.i18n.getMessage("clearAllDataConfirm"))) {
         chrome.storage.local.clear(() => {
             setCollections([]);
             setHistory([]);
             setRootRequests([]);
-            setTabs([{ id: 'welcome', type: 'welcome', title: 'Welcome' }]);
+            setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
             setActiveTabId('welcome');
             window.location.reload(); 
         });
@@ -353,14 +354,14 @@ const App: React.FC = () => {
           tabs={tabs}
           activeRequestId={activeTabId}
           onSelectRequest={openRequestInTab}
-          onCreateCollection={() => { const newCol = { id: generateId(), name: 'New Collection', requests: [], collapsed: false }; const next = [...collections, newCol]; setCollections(next); chrome.storage.local.set({ collections: next }); setSidebarTab('collections'); }}
+          onCreateCollection={() => { const newCol = { id: generateId(), name: chrome.i18n.getMessage("newCollection"), requests: [], collapsed: false }; const next = [...collections, newCol]; setCollections(next); chrome.storage.local.set({ collections: next }); setSidebarTab('collections'); }}
           onCreateRequest={handleCreateRequest}
           onImportCurl={() => setIsCurlModalOpen(true)}
           onClearHistory={() => { setHistory([]); chrome.storage.local.set({ logs: [] }); }}
           onDeleteLog={(id) => { const next = history.filter(h => h.id !== id); setHistory(next); chrome.storage.local.set({ logs: next }); handleTabClose(id); }}
           onRenameCollection={(id, name) => { const next = collections.map(c => c.id === id ? { ...c, name } : c); setCollections(next); chrome.storage.local.set({ collections: next }); }}
           onRenameRequest={handleRenameRequest}
-          onDeleteCollection={(id) => { if (confirm('Delete this collection?')) { const next = collections.filter(c => c.id !== id); setCollections(next); chrome.storage.local.set({ collections: next }); } }}
+          onDeleteCollection={(id) => { if (confirm(chrome.i18n.getMessage("deleteCollectionConfirm"))) { const next = collections.filter(c => c.id !== id); setCollections(next); chrome.storage.local.set({ collections: next }); } }}
           onDeleteRequest={(req) => { const nextRoots = rootRequests.filter(r => r.id !== req.id); const nextCols = collections.map(c => ({ ...c, requests: c.requests.filter(r => r.id !== req.id) })); setRootRequests(nextRoots); setCollections(nextCols); chrome.storage.local.set({ rootRequests: nextRoots, collections: nextCols }); handleTabClose(req.id); }}
           onDuplicateRequest={(reqId) => {
               let found = rootRequests.find(r => r.id === reqId) || collections.flatMap(c => c.requests).find(r => r.id === reqId);
@@ -388,12 +389,12 @@ const App: React.FC = () => {
              <button 
                 onClick={() => setIsSidebarCollapsed(false)}
                 className="absolute left-0 top-1.5 z-[60] p-1 bg-white border border-l-0 border-gray-200 rounded-r shadow-sm hover:bg-gray-50 transition-colors"
-                title="Expand Sidebar"
+                title={chrome.i18n.getMessage("expandSidebar")}
              >
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 5l7 7-7 7M5 5l7 7-7 7" strokeWidth={2}/></svg>
              </button>
          )}
-         <TabBar tabs={tabs} activeTabId={activeTabId} onTabClick={handleTabClick} onTabClose={handleTabClose} onTabReorder={(f, t) => { const next = [...tabs]; const [m] = next.splice(f, 1); next.splice(t, 0, m); setTabs(next); }} onTabRename={handleTabRename} onTabAction={(a, tid) => { const idx = tabs.findIndex(t => t.id === tid); let next: TabItem[] = []; switch (a) { case 'close-others': next = tabs.filter(t => t.id === tid); break; case 'close-right': next = tabs.filter((_, i) => i <= idx); break; case 'close-left': next = tabs.filter((_, i) => i >= idx); break; case 'close-all': next = []; break; } setTabs(next.length === 0 ? [{ id: 'welcome', type: 'welcome', title: 'Welcome' }] : next); if (!next.find(t => t.id === activeTabId)) setActiveTabId(next[next.length - 1]?.id || 'welcome'); }} collections={collections} onSaveToCollection={handleSaveToCollection} />
+         <TabBar tabs={tabs} activeTabId={activeTabId} onTabClick={handleTabClick} onTabClose={handleTabClose} onTabReorder={(f, t) => { const next = [...tabs]; const [m] = next.splice(f, 1); next.splice(t, 0, m); setTabs(next); }} onTabRename={handleTabRename} onTabAction={(a, tid) => { const idx = tabs.findIndex(t => t.id === tid); let next: TabItem[] = []; switch (a) { case 'close-others': next = tabs.filter(t => t.id === tid); break; case 'close-right': next = tabs.filter((_, i) => i <= idx); break; case 'close-left': next = tabs.filter((_, i) => i >= idx); break; case 'close-all': next = []; break; } setTabs(next.length === 0 ? [{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }] : next); if (!next.find(t => t.id === activeTabId)) setActiveTabId(next[next.length - 1]?.id || 'welcome'); }} collections={collections} onSaveToCollection={handleSaveToCollection} />
          <div className="flex-1 flex flex-col relative overflow-hidden">
             {!activeRequest || activeTabId === 'welcome' ? (
                 <WelcomeScreen onCreateRequest={handleCreateRequest} onCreateCollection={() => {}} onImportCurl={() => setIsCurlModalOpen(true)} />
@@ -412,7 +413,7 @@ const App: React.FC = () => {
             )}
          </div>
       </div>
-      <Modal isOpen={isCurlModalOpen} onClose={() => setIsCurlModalOpen(false)} title="Import cURL" onConfirm={handleImportCurlConfirm} confirmText="Import" confirmDisabled={!curlInput.trim()}>
+      <Modal isOpen={isCurlModalOpen} onClose={() => setIsCurlModalOpen(false)} title={chrome.i18n.getMessage("importCurlCommand")} onConfirm={handleImportCurlConfirm} confirmText={chrome.i18n.getMessage("import")} confirmDisabled={!curlInput.trim()}>
           <textarea value={curlInput} onChange={(e) => setCurlInput(e.target.value)} className="w-full h-40 border border-gray-300 rounded p-3 font-mono text-xs focus:outline-none focus:border-green-500 bg-gray-50" placeholder="curl 'https://api.example.com' ..." />
       </Modal>
     </div>
