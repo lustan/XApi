@@ -15,6 +15,11 @@ const FORBIDDEN_HEADERS = [
     'date', 'expect', 'keep-alive', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'via'
 ];
 
+const isContentTypeHeader = (key: string) => key.toLowerCase() === 'content-type';
+
+const hasHeader = (headers: Record<string, string>, name: string) =>
+    Object.keys(headers).some(key => key.toLowerCase() === name.toLowerCase());
+
 const createNewRequest = (collectionId?: string): HttpRequest => ({
   id: generateId(),
   collectionId,
@@ -225,10 +230,14 @@ const App: React.FC = () => {
     const startTime = Date.now();
     try {
       const enabledHeaders = activeRequest.headers.filter(h => h.enabled && h.key);
+      const isFormDataRequest = activeRequest.method !== 'GET' && activeRequest.method !== 'HEAD' && activeRequest.bodyType === 'form-data';
+      const requestHeaders = isFormDataRequest
+          ? enabledHeaders.filter(h => !isContentTypeHeader(h.key))
+          : enabledHeaders;
       
       // 核心修改：区分 fetch 能够设置的普通 Header 和 需要通过 DNR 强制修改的敏感 Header
       const safeHeaderObj: Record<string, string> = {};
-      enabledHeaders.forEach(h => { 
+      requestHeaders.forEach(h => { 
           const lowerKey = h.key.toLowerCase();
           // 如果不是禁止修改的请求头，且不以 Sec- 或 Proxy- 开头，则可以放入 fetch 的 headers 中
           if (!FORBIDDEN_HEADERS.includes(lowerKey) && !lowerKey.startsWith('sec-') && !lowerKey.startsWith('proxy-')) {
@@ -242,7 +251,7 @@ const App: React.FC = () => {
               chrome.runtime.sendMessage({
                   type: 'SET_REQUEST_HEADERS',
                   url: activeRequest.url,
-                  headers: enabledHeaders.map(h => ({ key: h.key, value: h.value }))
+                  headers: requestHeaders.map(h => ({ key: h.key, value: h.value }))
               }, resolve);
           });
       }
@@ -257,7 +266,7 @@ const App: React.FC = () => {
             params.append(f.key, f.value);
           });
           body = params.toString();
-          if (!safeHeaderObj['Content-Type']) safeHeaderObj['Content-Type'] = 'application/x-www-form-urlencoded';
+          if (!hasHeader(safeHeaderObj, 'Content-Type')) safeHeaderObj['Content-Type'] = 'application/x-www-form-urlencoded';
         } else if (activeRequest.bodyType === 'form-data') {
           const formData = new FormData();
           activeRequest.bodyForm.filter(f => f.enabled && f.key).forEach(f => {
