@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { HttpResponse } from '../types';
 import { formatBytes } from '../utils';
 
@@ -104,7 +104,7 @@ export const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, error 
         )}
 
         {response && !error && activeTab === 'body' && (
-             <ResponseContent body={response.body} />
+             <ResponseContent body={response.body} size={response.size} />
         )}
         
         {response && !error && activeTab === 'headers' && (
@@ -122,16 +122,158 @@ export const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, error 
   );
 };
 
-const ResponseContent = ({ body }: { body: string }) => {
-    let content = body;
-    try {
-        const json = JSON.parse(body);
-        content = JSON.stringify(json, null, 2);
-    } catch {}
+const AUTO_FORMAT_LIMIT = 200 * 1024;
+const PREVIEW_LIMIT = 512 * 1024;
+const PREVIEW_CHARS = 256 * 1024;
+
+type BodyViewMode = 'auto' | 'preview' | 'raw' | 'formatted';
+
+const getMessage = (key: string, fallback: string) => chrome.i18n.getMessage(key) || fallback;
+
+const isJsonCandidate = (body: string) => {
+    const firstChar = body.trimStart()[0];
+    return firstChar === '{' || firstChar === '[';
+};
+
+const ResponseContent = ({ body, size }: { body: string; size: number }) => {
+    const [viewMode, setViewMode] = useState<BodyViewMode>('auto');
+    const [manualFormatted, setManualFormatted] = useState<string | null>(null);
+    const [isFormatting, setIsFormatting] = useState(false);
+    const [formatError, setFormatError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setViewMode('auto');
+        setManualFormatted(null);
+        setIsFormatting(false);
+        setFormatError(null);
+    }, [body]);
+
+    const largeResponseText = getMessage('largeResponsePreview', 'Large response preview');
+    const showingPreviewText = getMessage('showingPreview', 'Showing a preview to keep the browser responsive.');
+    const showPreviewText = getMessage('showPreview', 'Show Preview');
+    const showFullRawText = getMessage('showFullRaw', 'Show Full Raw');
+    const copyResponseText = getMessage('copyResponse', 'Copy Response');
+    const formattingText = getMessage('formatting', 'Formatting...');
+    const formatJsonText = getMessage('formatJSON', 'Format JSON');
+    const invalidJsonText = getMessage('invalidJSON', 'Invalid JSON');
+
+    const canAttemptJsonFormat = isJsonCandidate(body);
+    const canAutoFormat = canAttemptJsonFormat && body.length <= AUTO_FORMAT_LIMIT;
+    const isLarge = body.length > PREVIEW_LIMIT;
+    const shouldShowBodyTools = isLarge || (canAttemptJsonFormat && !canAutoFormat);
+
+    const autoFormatted = useMemo(() => {
+        if (!canAutoFormat) return null;
+
+        try {
+            return JSON.stringify(JSON.parse(body), null, 2);
+        } catch {
+            return null;
+        }
+    }, [body, canAutoFormat]);
+
+    const previewContent = useMemo(() => {
+        if (!isLarge) return body;
+        return body.slice(0, PREVIEW_CHARS);
+    }, [body, isLarge]);
+
+    const content = useMemo(() => {
+        if (viewMode === 'formatted' && manualFormatted !== null) return manualFormatted;
+        if (viewMode === 'raw') return body;
+        if (viewMode === 'preview') return previewContent;
+        if (isLarge) return previewContent;
+        return autoFormatted ?? body;
+    }, [autoFormatted, body, isLarge, manualFormatted, previewContent, viewMode]);
+
+    const isPreviewing = (viewMode === 'auto' && isLarge) || viewMode === 'preview';
+
+    const handleFormatJson = () => {
+        setIsFormatting(true);
+        setFormatError(null);
+
+        window.setTimeout(() => {
+            try {
+                setManualFormatted(JSON.stringify(JSON.parse(body), null, 2));
+                setViewMode('formatted');
+            } catch {
+                setFormatError(invalidJsonText);
+            } finally {
+                setIsFormatting(false);
+            }
+        }, 0);
+    };
+
+    const handleCopyResponse = async () => {
+        try {
+            await navigator.clipboard.writeText(body);
+        } catch {
+            setFormatError(getMessage('copyFailed', 'Copy failed'));
+        }
+    };
 
     return (
-        <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap overflow-x-auto h-full select-text">
-            {content}
-        </pre>
+        <div className="flex h-full min-h-0 flex-col">
+            {shouldShowBodyTools && (
+                <div className="mb-2 flex flex-wrap items-center gap-2 border-b border-gray-100 pb-2 text-xs">
+                    {isLarge && (
+                        <div className="mr-auto text-gray-500">
+                            <span className="font-medium text-gray-700">{largeResponseText}</span>
+                            <span className="ml-2">{showingPreviewText}</span>
+                            <span className="ml-2">{formatBytes(size)}</span>
+                        </div>
+                    )}
+
+                    {isLarge && (
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('preview')}
+                            className="rounded border border-gray-200 px-2 py-1 text-gray-600 hover:bg-gray-50"
+                        >
+                            {showPreviewText}
+                        </button>
+                    )}
+
+                    {isLarge && (
+                        <button
+                            type="button"
+                            onClick={() => setViewMode('raw')}
+                            className="rounded border border-gray-200 px-2 py-1 text-gray-600 hover:bg-gray-50"
+                        >
+                            {showFullRawText}
+                        </button>
+                    )}
+
+                    {canAttemptJsonFormat && (
+                        <button
+                            type="button"
+                            onClick={handleFormatJson}
+                            disabled={isFormatting}
+                            className="rounded border border-emerald-200 px-2 py-1 text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {isFormatting ? formattingText : formatJsonText}
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={handleCopyResponse}
+                        className="rounded border border-gray-200 px-2 py-1 text-gray-600 hover:bg-gray-50"
+                    >
+                        {copyResponseText}
+                    </button>
+                </div>
+            )}
+
+            {formatError && (
+                <div className="mb-2 rounded border border-red-100 bg-red-50 px-2 py-1 text-xs text-red-600">
+                    {formatError}
+                </div>
+            )}
+
+            <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words text-xs font-mono text-gray-800 select-text">
+                {content}
+                {isPreviewing && body.length > previewContent.length ? '\n\n...' : ''}
+            </pre>
+        </div>
     );
 };

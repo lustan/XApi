@@ -371,6 +371,34 @@
     "message": "打开面板",
     "description": "打开面板按钮文字"
   },
+  "largeResponsePreview": {
+    "message": "大响应内容",
+    "description": "响应体较大时显示的标签"
+  },
+  "showingPreview": {
+    "message": "已切换为预览模式以保持页面流畅。",
+    "description": "解释大响应预览模式的提示"
+  },
+  "showPreview": {
+    "message": "显示预览",
+    "description": "显示大响应预览的按钮文字"
+  },
+  "showFullRaw": {
+    "message": "显示完整原文",
+    "description": "渲染完整原始响应体的按钮文字"
+  },
+  "copyResponse": {
+    "message": "复制响应",
+    "description": "复制完整响应体的按钮文字"
+  },
+  "formatting": {
+    "message": "格式化中...",
+    "description": "JSON 格式化进行中的提示"
+  },
+  "copyFailed": {
+    "message": "复制失败",
+    "description": "复制响应体失败时的错误消息"
+  },
   "pending": {
     "message": "待定...",
     "description": "待定状态文字"

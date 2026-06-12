@@ -41,6 +41,43 @@ const escapeShellArg = (arg: string): string => {
   return `'${String(arg).replace(/'/g, "'\\''")}'`;
 };
 
+const isFormUrlEncodedHeader = (value: string): boolean => {
+  return value.split(';', 1)[0].trim().toLowerCase() === 'application/x-www-form-urlencoded';
+};
+
+const hasFormUrlEncodedContentType = (headers?: KeyValue[]): boolean => {
+  return !!headers?.some(header =>
+    header.enabled &&
+    header.key.trim().toLowerCase() === 'content-type' &&
+    isFormUrlEncodedHeader(header.value)
+  );
+};
+
+const decodeFormComponent = (value: string): string => {
+  return decodeURIComponent(value.replace(/\+/g, ' '));
+};
+
+const parseFormUrlEncodedBody = (body: string): KeyValue[] | null => {
+  if (!body) return [];
+
+  try {
+    return body.split('&').map(pair => {
+      const separatorIndex = pair.indexOf('=');
+      const rawKey = separatorIndex >= 0 ? pair.slice(0, separatorIndex) : pair;
+      const rawValue = separatorIndex >= 0 ? pair.slice(separatorIndex + 1) : '';
+
+      return {
+        id: generateId(),
+        key: decodeFormComponent(rawKey),
+        value: decodeFormComponent(rawValue),
+        enabled: true
+      };
+    });
+  } catch (e) {
+    return null;
+  }
+};
+
 export const generateCurl = (log: LoggedRequest): string => {
   let curl = `curl -X ${log.method} ${escapeShellArg(sanitizeForCurl(log.url))}`;
   
@@ -142,20 +179,31 @@ export const parseCurl = (curlCommand: string): Partial<HttpRequest> | null => {
     }
   }
 
-  const dataRegex = /(?:--data-raw|--data-binary|--data-urlencode|--data|-d|--form|-F)\s+(['"])([\s\S]*?)\1/;
+  const dataRegex = /(--data-raw|--data-binary|--data-urlencode|--data|-d|--form|-F)\s+(['"])([\s\S]*?)\2/;
   const dataMatch = cleanCommand.match(dataRegex);
   
   if (dataMatch) {
-    const matchedArg = dataMatch[0];
-    if (matchedArg.includes('--form') || matchedArg.includes('-F')) {
+    const dataFlag = dataMatch[1];
+    if (dataFlag === '--form' || dataFlag === '-F') {
         request.bodyType = 'form-data';
-        const pair = dataMatch[2].split('=');
+        const pair = dataMatch[3].split('=');
         if (pair.length >= 2) {
             request.bodyForm = [{ id: generateId(), key: pair[0], value: pair.slice(1).join('='), enabled: true, type: 'text' }];
         }
     } else {
-        request.bodyRaw = dataMatch[2];
-        request.bodyType = 'raw';
+        const body = dataMatch[3];
+        const parsedForm = hasFormUrlEncodedContentType(request.headers)
+          ? parseFormUrlEncodedBody(body)
+          : null;
+
+        if (parsedForm) {
+            request.bodyType = 'x-www-form-urlencoded';
+            request.bodyForm = parsedForm;
+            request.bodyRaw = '';
+        } else {
+            request.bodyRaw = body;
+            request.bodyType = 'raw';
+        }
     }
     if (!methodMatch) request.method = 'POST';
   }

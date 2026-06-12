@@ -371,6 +371,34 @@
     "message": "Open Dashboard",
     "description": "Open dashboard button text"
   },
+  "largeResponsePreview": {
+    "message": "Large response",
+    "description": "Label shown when response body is large"
+  },
+  "showingPreview": {
+    "message": "Showing a preview to keep the browser responsive.",
+    "description": "Message explaining large response preview mode"
+  },
+  "showPreview": {
+    "message": "Show Preview",
+    "description": "Button text for showing large response preview"
+  },
+  "showFullRaw": {
+    "message": "Show Full Raw",
+    "description": "Button text for rendering the full raw response body"
+  },
+  "copyResponse": {
+    "message": "Copy Response",
+    "description": "Button text for copying the full response body"
+  },
+  "formatting": {
+    "message": "Formatting...",
+    "description": "Text shown while formatting JSON"
+  },
+  "copyFailed": {
+    "message": "Copy failed",
+    "description": "Error message when copying response body fails"
+  },
   "pending": {
     "message": "Pending...",
     "description": "Pending status text"
