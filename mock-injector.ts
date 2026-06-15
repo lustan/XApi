@@ -4,6 +4,14 @@
  *
  * It receives rules via window.postMessage from mock-bridge.ts (the
  * content script). It cannot use chrome.* APIs.
+ *
+ * IMPORTANT — IIFE wrapping is mandatory:
+ * Chrome injects this file as a CLASSIC script in the page's MAIN world,
+ * so any top-level `const`/`let` becomes a global lexical binding that
+ * shadows page globals. Rollup minifies our local consts to single-letter
+ * names (`$`, `f`, `y`, ...), which would shadow jQuery's `$` and break
+ * every legacy site that does `$.extend(...)`. Wrapping the runtime in
+ * an IIFE keeps every binding scoped to this function. Do NOT remove.
  */
 
 type RuleMatchMode = 'startsWith';
@@ -34,6 +42,8 @@ interface State {
   enabled: boolean;
   rules: MockRule[];
 }
+
+(() => {
 
 const TAG = '[XApi-Mock]';
 const MSG_TAG = 'xapi-mock';
@@ -389,3 +399,5 @@ XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
 };
 
 console.debug(`${TAG} injector ready`);
+
+})();
