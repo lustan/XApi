@@ -503,10 +503,6 @@
     "message": "Add field",
     "description": "Button to add a new JSON-patch row"
   },
-  "mockRawValueHint": {
-    "message": "Use prefix \"::raw::\" to inject raw JSON (number/bool/null/object).",
-    "description": "Hint about raw value prefix for JSON patches"
-  },
   "mockNoSample": {
     "message": "No matching capture in history yet — type the path manually.",
     "description": "Hint shown when there's no captured request matching the URL pattern"

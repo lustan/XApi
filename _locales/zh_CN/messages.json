@@ -503,10 +503,6 @@
     "message": "添加字段",
     "description": "添加 JSON Patch 行按钮"
   },
-  "mockRawValueHint": {
-    "message": "在值前加 \"::raw::\" 前缀可注入原始 JSON（数字 / 布尔 / null / 对象 / 数组）。",
-    "description": "JSON Patch 原始值前缀提示"
-  },
   "mockNoSample": {
     "message": "暂无与该 URL 匹配的捕获记录，请手动填写路径。",
     "description": "无可参考样本时的提示"

@@ -36,6 +36,138 @@ const tryFormatJson = (s: string): { ok: boolean; pretty?: string; error?: strin
   }
 };
 
+// ============== JsonPatch value cell ==============
+// The storage layer still uses the legacy "::raw::" prefix to distinguish
+// raw-JSON values from plain strings (see mock-injector.ts/interpretValue).
+// In the UI we hide that prefix entirely behind a type chip so users never
+// have to type it. Inference on mount keeps existing rules backwards-compatible.
+
+type ValueType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'null';
+
+const RAW_PREFIX = '::raw::';
+
+const inferValueType = (storage: string): { type: ValueType; display: string } => {
+  if (!storage.startsWith(RAW_PREFIX)) return { type: 'string', display: storage };
+  const raw = storage.slice(RAW_PREFIX.length);
+  try {
+    const v = JSON.parse(raw);
+    if (v === null) return { type: 'null', display: 'null' };
+    if (typeof v === 'number') return { type: 'number', display: raw };
+    if (typeof v === 'boolean') return { type: 'boolean', display: raw };
+    if (Array.isArray(v)) return { type: 'array', display: raw };
+    if (typeof v === 'object') return { type: 'object', display: raw };
+  } catch {
+    // Unparseable raw segment — fall back to string flavour so the user can
+    // keep editing without losing characters.
+  }
+  return { type: 'string', display: raw };
+};
+
+const serializeValue = (type: ValueType, display: string): string => {
+  if (type === 'string') return display;
+  if (type === 'null') return `${RAW_PREFIX}null`;
+  return `${RAW_PREFIX}${display}`;
+};
+
+const TYPE_OPTIONS: { value: ValueType; label: string }[] = [
+  { value: 'string', label: 'String' },
+  { value: 'number', label: 'Number' },
+  { value: 'boolean', label: 'Boolean' },
+  { value: 'array', label: 'Array' },
+  { value: 'object', label: 'Object' },
+  { value: 'null', label: 'Null' },
+];
+
+const PLACEHOLDERS: Record<ValueType, string> = {
+  string: 'admin',
+  number: '18',
+  boolean: 'true',
+  array: '[1, 2, 3]',
+  object: '{"role": "vip"}',
+  null: 'null',
+};
+
+interface ValueCellProps {
+  storedValue: string;
+  onChange: (next: string) => void;
+}
+
+const ValueCell: React.FC<ValueCellProps> = ({ storedValue, onChange }) => {
+  // Seed type+display from the stored value once. Subsequent re-renders are
+  // driven by local state so a half-typed JSON object (e.g. "{") doesn't get
+  // re-classified as a string mid-edit and yank the chip out from under us.
+  const initial = useMemo(() => inferValueType(storedValue), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [type, setType] = useState<ValueType>(initial.type);
+  const [display, setDisplay] = useState<string>(initial.display);
+
+  // If the stored value changes from outside (rule reset, history-fill, etc.)
+  // and no longer matches what we'd have produced, resync from storage.
+  useEffect(() => {
+    if (serializeValue(type, display) !== storedValue) {
+      const next = inferValueType(storedValue);
+      setType(next.type);
+      setDisplay(next.display);
+    }
+  }, [storedValue]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pushDisplay = (next: string) => {
+    setDisplay(next);
+    onChange(serializeValue(type, next));
+  };
+
+  const changeType = (next: ValueType) => {
+    // Normalize display so the new type round-trips cleanly. We don't try to
+    // be too clever — just give the user a valid starting point.
+    let d = display;
+    if (next === 'null') d = 'null';
+    else if (next === 'boolean' && d !== 'true' && d !== 'false') d = 'true';
+    else if (next === 'number' && !/^-?\d+(\.\d+)?$/.test(d.trim())) d = '0';
+    else if (next === 'array' && !d.trim().startsWith('[')) d = '[]';
+    else if (next === 'object' && !d.trim().startsWith('{')) d = '{}';
+    setType(next);
+    setDisplay(d);
+    onChange(serializeValue(next, d));
+  };
+
+  const inputCls =
+    'flex-1 min-w-0 text-xs font-mono border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-2 py-1 focus:outline-none transition-all disabled:bg-gray-50 disabled:text-gray-400';
+
+  return (
+    <div className="flex-1 pr-2 flex items-center space-x-1">
+      {type === 'null' ? (
+        <input type="text" disabled value="null" className={inputCls} />
+      ) : type === 'boolean' ? (
+        <select
+          value={display}
+          onChange={e => pushDisplay(e.target.value)}
+          className={inputCls}
+        >
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+      ) : (
+        <input
+          type={type === 'number' ? 'number' : 'text'}
+          value={display}
+          onChange={e => pushDisplay(e.target.value)}
+          placeholder={PLACEHOLDERS[type]}
+          className={inputCls}
+        />
+      )}
+      <select
+        value={type}
+        onChange={e => changeType(e.target.value as ValueType)}
+        title="Value type"
+        className="text-[10px] font-semibold text-gray-500 border border-gray-200 hover:border-gray-300 focus:border-green-500 rounded px-1 py-1 bg-white focus:outline-none transition-colors"
+      >
+        {TYPE_OPTIONS.map(o => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 export const MockEditor: React.FC<MockEditorProps> = ({ rule, history, onRuleChange }) => {
   const update = (partial: Partial<MockRule>) => onRuleChange({ ...rule, ...partial });
   const [bodyView, setBodyView] = useState<'edit' | 'preview'>('edit');
@@ -97,7 +229,6 @@ export const MockEditor: React.FC<MockEditorProps> = ({ rule, history, onRuleCha
   const pathLabel = t('mockJsonPathHeader', 'Field path');
   const newValueLabel = t('mockJsonValueHeader', 'New value');
   const addFieldLabel = t('mockAddField', 'Add field');
-  const rawHint = t('mockRawValueHint', 'Use prefix "::raw::" to inject raw JSON (number/bool/null/object).');
   const noRequestSampleHint = t('mockNoSample', 'No matching capture in history yet — type the path manually.');
   const selectAllTitle = allEnabled
     ? t('mockDeselectAll', 'Deselect all')
@@ -238,7 +369,6 @@ export const MockEditor: React.FC<MockEditorProps> = ({ rule, history, onRuleCha
 
           {rule.mode === 'patch-json' && (
             <div className="space-y-2">
-              <div className="text-[11px] text-gray-500">{rawHint}</div>
               <div className="border border-gray-200 rounded overflow-hidden">
                 <div className="flex bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1.5 border-b border-gray-200">
                   <div className="w-7 flex justify-center">
@@ -281,15 +411,10 @@ export const MockEditor: React.FC<MockEditorProps> = ({ rule, history, onRuleCha
                         </datalist>
                       )}
                     </div>
-                    <div className="flex-1 pr-2">
-                      <input
-                        type="text"
-                        value={p.value}
-                        onChange={e => updatePatch(p.id, { value: e.target.value })}
-                        placeholder="admin   (or ::raw::true)"
-                        className="w-full text-xs font-mono border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-2 py-1 focus:outline-none transition-all"
-                      />
-                    </div>
+                    <ValueCell
+                      storedValue={p.value}
+                      onChange={next => updatePatch(p.id, { value: next })}
+                    />
                     <div className="w-7 flex justify-center">
                       <button
                         onClick={() => removePatch(p.id)}
