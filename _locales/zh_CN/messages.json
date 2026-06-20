@@ -160,8 +160,8 @@
     "description": "已捕获请求标签页"
   },
   "record": {
-    "message": "录制中",
-    "description": "录制状态标签"
+    "message": "捕获中",
+    "description": "捕获状态标签"
   },
   "paused": {
     "message": "已暂停",
@@ -348,20 +348,20 @@
     "description": "添加新项目按钮文字"
   },
   "startRecording": {
-    "message": "开始录制",
-    "description": "开始录制按钮提示"
+    "message": "开始捕获",
+    "description": "开始捕获按钮提示"
   },
   "stopRecording": {
-    "message": "停止录制",
-    "description": "停止录制按钮提示"
+    "message": "停止捕获",
+    "description": "停止捕获按钮提示"
   },
   "noRequestsFound": {
     "message": "未找到请求",
     "description": "未找到请求时的提示"
   },
   "recording": {
-    "message": "录制中...",
-    "description": "录制状态指示"
+    "message": "捕获中...",
+    "description": "捕获状态指示"
   },
   "filterRequests": {
     "message": "筛选请求...",
@@ -402,6 +402,10 @@
   "pending": {
     "message": "待定...",
     "description": "待定状态文字"
+  },
+  "captureTab": {
+    "message": "捕获",
+    "description": "侧边栏 捕获 标签"
   },
   "mockTab": {
     "message": "挡板",

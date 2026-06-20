@@ -160,8 +160,8 @@
     "description": "Tab label for captured requests"
   },
   "record": {
-    "message": "RECORDING",
-    "description": "Label for recording status"
+    "message": "CAPTURING",
+    "description": "Label for capturing status"
   },
   "paused": {
     "message": "PAUSED",
@@ -348,20 +348,20 @@
     "description": "Button text for adding new item"
   },
   "startRecording": {
-    "message": "Start Recording",
-    "description": "Tooltip for start recording button"
+    "message": "Start Capturing",
+    "description": "Tooltip for start Capturing button"
   },
   "stopRecording": {
-    "message": "Stop Recording",
-    "description": "Tooltip for stop recording button"
+    "message": "Stop Capturing",
+    "description": "Tooltip for stop Capturing button"
   },
   "noRequestsFound": {
     "message": "No requests found",
     "description": "Message when no requests are found"
   },
   "recording": {
-    "message": "Recording...",
-    "description": "Recording status indicator"
+    "message": "Capturing...",
+    "description": "Capturing status indicator"
   },
   "filterRequests": {
     "message": "Filter requests...",
@@ -402,6 +402,10 @@
   "pending": {
     "message": "Pending...",
     "description": "Pending status text"
+  },
+  "captureTab": {
+    "message": "Capture",
+    "description": "Capture tab label"
   },
   "mockTab": {
     "message": "Mock",

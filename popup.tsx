@@ -118,7 +118,7 @@ const Popup = () => {
             >
                 <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isRecording ? 'translate-x-12' : 'translate-x-1'}`} />
                 <span className={`absolute text-[9px] font-bold uppercase tracking-wide text-white pointer-events-none ${isRecording ? 'left-1.5' : 'right-1.5'}`}>
-                   Record
+                   {chrome.i18n.getMessage("captureTab") || 'Capture'}
                 </span>
             </button>
          </div>
