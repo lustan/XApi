@@ -75,8 +75,6 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
   const headersText = chrome.i18n.getMessage("headers");
   const bodyText = chrome.i18n.getMessage("body");
   const authText = chrome.i18n.getMessage("auth");
-  const queryParametersText = chrome.i18n.getMessage("queryParameters");
-  const requestHeadersText = chrome.i18n.getMessage("requestHeaders");
   const authorizationConfigText = chrome.i18n.getMessage("authorizationConfig");
   const thisRequestDoesNotHaveABodyText = chrome.i18n.getMessage("thisRequestDoesNotHaveABody");
   const formatJSONText = chrome.i18n.getMessage("formatJSON");
@@ -142,7 +140,6 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
       <div className="flex-1 overflow-y-auto p-4 bg-white relative">
         {activeTab === 'params' && (
            <div>
-               <div className="mb-2 text-xs text-gray-500">{queryParametersText}</div>
                {/* Params don't need the Type selector (Text/File) */}
                <InputTable items={request.params} onChange={handleParamsChange} hideTitle withTypeSelector={false} />
            </div>
@@ -150,7 +147,6 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
 
         {activeTab === 'headers' && (
            <div>
-              <div className="mb-2 text-xs text-gray-500">{requestHeadersText}</div>
               <InputTable items={request.headers} onChange={(headers) => onRequestChange({ ...request, headers })} hideTitle withTypeSelector={false} />
            </div>
         )}

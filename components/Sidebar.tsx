@@ -44,6 +44,7 @@ interface SidebarProps {
   onToggleMockRule: (id: string) => void;
   onDeleteMockRule: (id: string) => void;
   onDuplicateMockRule: (id: string) => void;
+  onClearMockRules: () => void;
   onMockFromLog: (log: LoggedRequest) => void;
 }
 
@@ -65,7 +66,7 @@ const copyToClipboard = (text: string): boolean => {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab, onTabChange, history, onImportLoggedRequest, collections, rootRequests, tabs, activeRequestId, onSelectRequest, onCreateCollection, onCreateRequest, onImportCurl, onClearHistory, onDeleteLog, onRenameCollection, onRenameRequest, onDeleteCollection, onDeleteRequest, onDuplicateRequest, onToggleCollapse, onMoveRequest, isRecording, onToggleRecording, onCollapseSidebar, onResetAllData, language, onLanguageChange,
-  mockRules, mockGlobalEnabled, onSelectMockRule, onCreateMockRule, onToggleMockGlobal, onToggleMockRule, onDeleteMockRule, onDuplicateMockRule, onMockFromLog
+  mockRules, mockGlobalEnabled, onSelectMockRule, onCreateMockRule, onToggleMockGlobal, onToggleMockRule, onDeleteMockRule, onDuplicateMockRule, onClearMockRules, onMockFromLog
 }) => {
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, type: 'collection' | 'request' | 'log', id: string, data?: any } | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -266,6 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onToggleRule={onToggleMockRule}
             onDelete={onDeleteMockRule}
             onDuplicate={onDuplicateMockRule}
+            onClear={onClearMockRules}
           />
         ) : activeTab === 'history' ? (
           <div className="divide-y divide-gray-100">

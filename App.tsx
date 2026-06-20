@@ -197,6 +197,19 @@ const App: React.FC = () => {
       handleTabClose(id);
   };
 
+  const handleClearMockRules = () => {
+      if (!confirm(chrome.i18n.getMessage("clearMockRulesConfirm") || 'Clear all mock rules?')) return;
+      persistMockRules([]);
+      const nextTabs = tabs.filter(t => t.type !== 'mock');
+      if (nextTabs.length === 0) {
+          setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
+          setActiveTabId('welcome');
+      } else {
+          setTabs(nextTabs);
+          if (activeTab?.type === 'mock') setActiveTabId(nextTabs[nextTabs.length - 1].id);
+      }
+  };
+
   const handleDuplicateMockRule = (id: string) => {
       const found = mockRules.find(r => r.id === id);
       if (!found) return;
@@ -530,6 +543,7 @@ const App: React.FC = () => {
           onToggleMockRule={handleToggleMockRule}
           onDeleteMockRule={handleDeleteMockRule}
           onDuplicateMockRule={handleDuplicateMockRule}
+          onClearMockRules={handleClearMockRules}
           onMockFromLog={handleMockFromLog}
         />
       )}

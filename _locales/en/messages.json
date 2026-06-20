@@ -435,6 +435,10 @@
     "message": "Mock this response",
     "description": "Context menu label to create a mock rule from a captured request"
   },
+  "clearMockRulesConfirm": {
+    "message": "Clear all mock rules? This cannot be undone.",
+    "description": "Confirmation message when clearing all mock rules"
+  },
   "mockRuleEnabled": {
     "message": "Enabled",
     "description": "Toggle label to enable/disable a single mock rule"
