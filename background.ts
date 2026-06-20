@@ -122,10 +122,9 @@ const attachResponseBody = (url: string, method: string, body: string, truncated
             now - (l.timestamp || 0) < 10_000
         );
         if (idx === -1) return;
-        const next = logs.slice();
-        next[idx] = { ...next[idx], responseBody: body };
-        if (truncated) next[idx].responseTruncated = true;
-        chrome.storage.local.set({ logs: next });
+        const nextLog = { ...logs[idx], responseBody: body };
+        if (truncated) nextLog.responseTruncated = true;
+        saveLog(nextLog);
     });
 };
 

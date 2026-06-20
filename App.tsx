@@ -221,13 +221,14 @@ const App: React.FC = () => {
   };
 
   const handleMockFromLog = (log: LoggedRequest) => {
+      const latestLog = history.find(item => item.id === log.id) || log;
       // Build a starter rule from a captured request. Keep host+path so
       // cross-origin patterns still match; drop the query string so the
       // startsWith pattern survives differing query orders.
-      let urlPattern = log.url;
+      let urlPattern = latestLog.url;
       try {
-          const u = new URL(log.url);
-          urlPattern = `${u.protocol}//${u.host}${u.pathname}` || log.url;
+          const u = new URL(latestLog.url);
+          urlPattern = `${u.protocol}//${u.host}${u.pathname}` || latestLog.url;
       } catch { /* noop */ }
 
       // If the captured response is JSON, prefer patch-json mode and pre-fill
@@ -236,9 +237,11 @@ const App: React.FC = () => {
       let mode: 'replace' | 'patch-json' = 'replace';
       let jsonPatches: ReturnType<typeof buildPatchesFromJson> = [];
       let replaceBody = '{\n  "code": 0,\n  "data": {}\n}';
-      if (log.responseBody) {
+      const tabResponseBody = tabs.find(t => t.id === latestLog.id)?.response?.body;
+      const responseBody = latestLog.responseBody || tabResponseBody;
+      if (responseBody) {
           try {
-              const parsed = JSON.parse(log.responseBody);
+              const parsed = JSON.parse(responseBody);
               if (parsed != null && typeof parsed === 'object') {
                   mode = 'patch-json';
                   jsonPatches = buildPatchesFromJson(parsed);
@@ -251,7 +254,7 @@ const App: React.FC = () => {
           name: urlPattern,
           urlPattern,
           matchMode: 'startsWith',
-          method: (log.method?.toUpperCase() as any) || 'ANY',
+          method: (latestLog.method?.toUpperCase() as any) || 'ANY',
           mode,
           replaceBody,
           jsonPatches

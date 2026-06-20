@@ -98,6 +98,15 @@ const reportResponse = (
 
 const isJsonContentType = (ct: string) => !!ct && ct.toLowerCase().includes('json');
 
+const normalizeUrl = (url: string): string => {
+  if (!url) return '';
+  try {
+    return new URL(url, window.location.href).href;
+  } catch {
+    return url;
+  }
+};
+
 // ----- match ------
 const matchUrl = (url: string, pattern: string, _mode: RuleMatchMode): boolean => {
   if (!pattern) return false;
@@ -195,6 +204,7 @@ window.fetch = async function patchedFetch(input: RequestInfo | URL, init?: Requ
     }
   } catch { /* noop */ }
 
+  url = normalizeUrl(url);
   const rule = url ? matchRule(url, method) : undefined;
   if (!rule) {
     // No mock — let the request through, but try to capture JSON response
@@ -264,7 +274,7 @@ XHR.prototype.open = function (
   const u = typeof url === 'string' ? url : url.href;
   META.set(this, {
     method: (method || 'GET').toUpperCase(),
-    url: u,
+    url: normalizeUrl(u),
     async: async !== false,
     reqHeaders: []
   });
@@ -398,6 +408,7 @@ XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
   return origSend.call(this, body);
 };
 
+window.postMessage({ source: MSG_TAG, type: 'request-rules' }, '*');
 console.debug(`${TAG} injector ready`);
 
 })();
