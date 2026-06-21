@@ -131,9 +131,23 @@ const InputTableRow: React.FC<{
     );
 };
 
-// A row counts as "real" once it has a key — the auto-appended trailing empty
-// row should not influence select-all state or be batch-toggled.
-const isRealRow = (item: KeyValue) => !!(item.key && item.key.length > 0);
+export const getSelectAllState = (items: KeyValue[]) => {
+  const enabledCount = items.reduce((n, r) => n + (r.enabled ? 1 : 0), 0);
+
+  return {
+    selectableRows: items,
+    allEnabled: items.length > 0 && enabledCount === items.length,
+    someEnabled: enabledCount > 0 && enabledCount < items.length,
+  };
+};
+
+export const applyToggleAll = (items: KeyValue[]) => {
+  const { selectableRows, allEnabled } = getSelectAllState(items);
+  if (selectableRows.length === 0) return items;
+
+  const next = !allEnabled;
+  return items.map(it => ({ ...it, enabled: next }));
+};
 
 export const InputTable: React.FC<InputTableProps> = ({ items, onChange, title, hideTitle, withTypeSelector = false }) => {
 
@@ -143,19 +157,16 @@ export const InputTable: React.FC<InputTableProps> = ({ items, onChange, title, 
     }
   }, [items.length]);
 
-  // Select-all state across the "real" rows (rows with a non-empty key).
-  const realRows = items.filter(isRealRow);
-  const enabledRealCount = realRows.reduce((n, r) => n + (r.enabled ? 1 : 0), 0);
-  const allEnabled = realRows.length > 0 && enabledRealCount === realRows.length;
-  const someEnabled = enabledRealCount > 0 && enabledRealCount < realRows.length;
+  const { selectableRows, allEnabled, someEnabled } = getSelectAllState(items);
   const selectAllRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (selectAllRef.current) selectAllRef.current.indeterminate = someEnabled;
   }, [someEnabled, allEnabled]);
   const handleToggleAll = () => {
-    if (realRows.length === 0) return;
-    const next = !allEnabled;
-    onChange(items.map(it => isRealRow(it) ? { ...it, enabled: next } : it));
+    const nextItems = applyToggleAll(items);
+    if (nextItems === items) return;
+
+    onChange(nextItems);
   };
 
   const selectAllTitle = allEnabled
@@ -214,7 +225,7 @@ export const InputTable: React.FC<InputTableProps> = ({ items, onChange, title, 
             ref={selectAllRef}
             type="checkbox"
             title={selectAllTitle}
-            disabled={realRows.length === 0}
+            disabled={selectableRows.length === 0}
             checked={allEnabled}
             onChange={handleToggleAll}
             className="rounded text-green-600 focus:ring-green-500 disabled:opacity-40 cursor-pointer"
