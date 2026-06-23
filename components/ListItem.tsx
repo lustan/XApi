@@ -114,8 +114,8 @@ export const ListItem: React.FC<ListItemProps> = ({
       title={title_}
       className={`px-3 py-2 cursor-pointer transition-colors group relative border-l-4 ${
         isActive
-          ? 'bg-indigo-50 border-indigo-600'
-          : 'bg-transparent border-transparent hover:bg-white'
+          ? 'bg-green-50 border-l-green-500'
+          : 'bg-transparent border-l-green-100 hover:bg-white hover:border-l-green-300'
       }`}
     >
       {/* meta row */}
@@ -152,12 +152,12 @@ export const ListItem: React.FC<ListItemProps> = ({
               if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
               else if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
             }}
-            className="text-xs font-semibold bg-white border border-indigo-400 rounded px-1 py-0.5 outline-none focus:border-indigo-500"
+            className={`text-xs font-semibold bg-white border border-green-400 rounded px-1 py-0.5 outline-none focus:border-green-500`}
           />
         ) : (
           <span
             className={`text-xs font-semibold truncate ${
-              isActive ? 'text-indigo-900' : 'text-slate-800'
+              isActive ? 'text-green-900' : 'text-slate-800'
             } ${titleIsFallback ? 'italic text-gray-400' : ''}`}
             title={displayTitle}
           >
@@ -167,7 +167,7 @@ export const ListItem: React.FC<ListItemProps> = ({
         {subtitle !== undefined && (
           <span
             className={`text-[10px] truncate font-mono ${
-              isActive ? 'text-indigo-600/70' : 'text-slate-500'
+              isActive ? 'text-green-700/70' : 'text-slate-500'
             }`}
             title={subtitle || '—'}
           >

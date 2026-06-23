@@ -255,11 +255,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="flex text-xs font-bold border-b border-gray-200 bg-white uppercase tracking-wider">
-        <button onClick={() => onTabChange('collections')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'collections' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30' : 'text-gray-400 hover:text-gray-600'}`}>{collectionsText}</button>
-        <button onClick={() => onTabChange('history')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'history' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30' : 'text-gray-400 hover:text-gray-600'}`}>
+        <button onClick={() => onTabChange('collections')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'collections' ? 'text-green-600 border-b-2 border-green-500 bg-green-50/30' : 'text-gray-400 hover:text-gray-600'}`}>{collectionsText}</button>
+        <button onClick={() => onTabChange('history')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'history' ? 'text-green-600 border-b-2 border-green-500 bg-green-50/30' : 'text-gray-400 hover:text-gray-600'}`}>
             {capturedText} ({history.length})
         </button>
-        <button onClick={() => onTabChange('mock')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'mock' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/30' : 'text-gray-400 hover:text-gray-600'}`}>
+        <button onClick={() => onTabChange('mock')} className={`flex-1 py-2 text-center transition-all ${activeTab === 'mock' ? 'text-green-600 border-b-2 border-green-500 bg-green-50/30' : 'text-gray-400 hover:text-gray-600'}`}>
             {chrome.i18n.getMessage("mockTab") || 'Mock'} ({mockRules.length})
         </button>
       </div>
@@ -349,31 +349,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <div className="flex flex-col min-h-full">
             <div
-                className={`flex flex-col p-2 min-h-[40px] transition-colors ${isDragOverRootZone ? 'bg-indigo-100/50 outline-dashed outline-2 outline-indigo-400 rounded-md m-1' : ''}`}
+                className={`flex flex-col p-2 min-h-[40px] transition-colors ${isDragOverRootZone ? 'bg-green-100/50 outline-dashed outline-2 outline-green-400 rounded-md m-1' : ''}`}
                 onDragOver={(e) => handleDragOver(e, null)}
                 onDrop={(e) => handleDrop(e, null)}
                 onDragLeave={handleDragLeave}
             >
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1">{requestsText}</div>
                 <div className="space-y-0.5">
                     {rootRequests.map(renderRequestItem)}
                 </div>
             </div>
 
-            <div className="h-px bg-gray-200 my-2 mx-4" />
-
             <div className="flex flex-col p-2 space-y-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-1">{collectionsSectionText}</div>
                 {collections.map(col => (
                     <div
                         key={col.id}
-                        className={`rounded-md overflow-hidden transition-all pb-1 ${dragOverColId === col.id ? 'bg-blue-100 outline-dashed outline-2 outline-blue-400 m-0.5' : ''}`}
+                        className={`rounded-md overflow-hidden transition-all pb-1 ${dragOverColId === col.id ? 'bg-green-100 outline-dashed outline-2 outline-green-400 m-0.5' : ''}`}
                         onDragOver={(e) => handleDragOver(e, col.id)}
                         onDrop={(e) => handleDrop(e, col.id)}
                         onDragLeave={handleDragLeave}
                     >
                         <div className="flex items-center px-2 py-1.5 hover:bg-gray-200 cursor-pointer group" onClick={() => onToggleCollapse(col.id)} onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, type: 'collection', id: col.id, data: col }); }}>
-                            <svg className={`w-3.5 h-3.5 text-gray-400 mr-2 transform transition-transform ${col.collapsed ? '-rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                            <svg className={`w-3.5 h-3.5 text-gray-400 mr-1 transform transition-transform ${col.collapsed ? '-rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                            <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
                             {editingId === col.id && editingType === 'collection' ? (
                                 <input autoFocus value={editName} onClick={(e)=>e.stopPropagation()} onChange={(e) => setEditName(e.target.value)} onBlur={submitRename} onKeyDown={(e) => e.key === 'Enter' && submitRename()} className="flex-1 text-sm border border-blue-400 rounded px-1 outline-none h-6" />
                             ) : (
@@ -382,7 +379,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <span className="text-[10px] text-gray-400 font-bold ml-1">{col.requests.length}</span>
                         </div>
                         {!col.collapsed && (
-                            <div className="ml-5 pl-2 border-l border-gray-200 py-0.5 space-y-0.5 mr-1">
+                            <div className="pl-2 py-0.5 space-y-0.5 mr-1">
                                 {col.requests.map(renderRequestItem)}
                                 {col.requests.length === 0 && <div className="text-[10px] text-gray-400 italic py-1 pl-2">{emptyText}</div>}
                             </div>
