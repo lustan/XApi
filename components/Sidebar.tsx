@@ -17,6 +17,8 @@ interface SidebarProps {
   rootRequests: HttpRequest[];
   tabs: TabItem[];
   activeRequestId?: string;
+  activeCapturedId?: string;
+  activeMockRuleId?: string;
   onSelectRequest: (req: HttpRequest) => void;
   onCreateCollection: () => void;
   onCreateRequest: () => void;
@@ -67,7 +69,7 @@ const copyToClipboard = (text: string): boolean => {
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  activeTab, onTabChange, history, onImportLoggedRequest, collections, rootRequests, tabs, activeRequestId, onSelectRequest, onCreateCollection, onCreateRequest, onImportCurl, onClearHistory, onDeleteLog, onRenameCollection, onRenameRequest, onDeleteCollection, onDeleteRequest, onDuplicateRequest, onToggleCollapse, onMoveRequest, isRecording, onToggleRecording, onCollapseSidebar, onResetAllData, language, onLanguageChange,
+  activeTab, onTabChange, history, onImportLoggedRequest, collections, rootRequests, tabs, activeRequestId, activeCapturedId, activeMockRuleId, onSelectRequest, onCreateCollection, onCreateRequest, onImportCurl, onClearHistory, onDeleteLog, onRenameCollection, onRenameRequest, onDeleteCollection, onDeleteRequest, onDuplicateRequest, onToggleCollapse, onMoveRequest, isRecording, onToggleRecording, onCollapseSidebar, onResetAllData, language, onLanguageChange,
   mockRules, mockGlobalEnabled, onSelectMockRule, onCreateMockRule, onToggleMockGlobal, onToggleMockRule, onDeleteMockRule, onDuplicateMockRule, onClearMockRules, onRenameMockRule, onMockFromLog
 }) => {
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, type: 'collection' | 'request' | 'log', id: string, data?: any } | null>(null);
@@ -269,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <MockList
             rules={mockRules}
             globalEnabled={mockGlobalEnabled}
-            activeRuleId={activeRequestId}
+            activeRuleId={activeMockRuleId}
             onSelect={onSelectMockRule}
             onCreate={onCreateMockRule}
             onToggleGlobal={onToggleMockGlobal}
@@ -310,7 +312,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
              </div>
              {filteredHistory.map(item => {
                  const { origin, path } = formatUrl(item.url);
-                 const isActive = activeRequestId === item.id;
+                 const isActive = activeCapturedId === item.id;
                  return (
                    <ListItem
                      key={item.id}

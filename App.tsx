@@ -509,7 +509,9 @@ const App: React.FC = () => {
           collections={collections}
           rootRequests={rootRequests}
           tabs={tabs}
-          activeRequestId={activeTabId}
+          activeRequestId={activeTab?.type === 'request' ? activeTabId : undefined}
+          activeCapturedId={activeTab?.type === 'request' ? activeTabId : undefined}
+          activeMockRuleId={activeTab?.type === 'mock' ? activeTabId : undefined}
           onSelectRequest={openRequestInTab}
           onCreateCollection={() => { const newCol = { id: generateId(), name: chrome.i18n.getMessage("newCollection"), requests: [], collapsed: false }; const next = [...collections, newCol]; setCollections(next); chrome.storage.local.set({ collections: next }); setSidebarTab('collections'); }}
           onCreateRequest={handleCreateRequest}
