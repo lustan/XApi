@@ -5,6 +5,7 @@ import { formatUrl, formatTime, getMethodColor, generateCurl, generateCurlFromRe
 import { Logo } from './Logo';
 import { APP_CONFIG } from '../config';
 import { MockList } from './MockList';
+import { ListItem } from './ListItem';
 import type { AppLanguage } from '../i18n';
 
 interface SidebarProps {
@@ -45,6 +46,7 @@ interface SidebarProps {
   onDeleteMockRule: (id: string) => void;
   onDuplicateMockRule: (id: string) => void;
   onClearMockRules: () => void;
+  onRenameMockRule: (id: string, newName: string) => void;
   onMockFromLog: (log: LoggedRequest) => void;
 }
 
@@ -66,7 +68,7 @@ const copyToClipboard = (text: string): boolean => {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab, onTabChange, history, onImportLoggedRequest, collections, rootRequests, tabs, activeRequestId, onSelectRequest, onCreateCollection, onCreateRequest, onImportCurl, onClearHistory, onDeleteLog, onRenameCollection, onRenameRequest, onDeleteCollection, onDeleteRequest, onDuplicateRequest, onToggleCollapse, onMoveRequest, isRecording, onToggleRecording, onCollapseSidebar, onResetAllData, language, onLanguageChange,
-  mockRules, mockGlobalEnabled, onSelectMockRule, onCreateMockRule, onToggleMockGlobal, onToggleMockRule, onDeleteMockRule, onDuplicateMockRule, onClearMockRules, onMockFromLog
+  mockRules, mockGlobalEnabled, onSelectMockRule, onCreateMockRule, onToggleMockGlobal, onToggleMockRule, onDeleteMockRule, onDuplicateMockRule, onClearMockRules, onRenameMockRule, onMockFromLog
 }) => {
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, type: 'collection' | 'request' | 'log', id: string, data?: any } | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -74,6 +76,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingType, setEditingType] = useState<'collection' | 'request' | null>(null);
   const [editName, setEditName] = useState('');
+  // Bumped per-request to retrigger ListItem rename via right-click menu.
+  const [reqRenameTicks, setReqRenameTicks] = useState<Record<string, number>>({});
   const [dragOverColId, setDragOverColId] = useState<string | null>(null);
   const [isDragOverRootZone, setIsDragOverRootZone] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -129,23 +133,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const renderRequestItem = (req: HttpRequest) => {
     const isActive = activeRequestId === req.id;
+    const { origin, path } = formatUrl(req.url);
+    const subtitle = origin && path
+      ? `${origin}${path}`
+      : (origin || path || '');
     return (
-      <div 
-        key={req.id} 
-        draggable 
-        onDragStart={(e) => handleDragStart(e, req.id)} 
-        onMouseDown={() => {}} // dummy to allow click
-        onClick={(e) => { e.stopPropagation(); onSelectRequest(req); }} 
-        onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, type: 'request', id: req.id, data: req }); }} 
-        className={`flex items-center px-2 py-1.5 rounded cursor-pointer text-xs transition-all relative group mb-0.5 ${isActive ? 'bg-indigo-50 text-indigo-800 font-semibold ring-1 ring-indigo-200' : 'text-gray-600 hover:bg-white hover:shadow-sm'}`}
-      >
-          <span className={`w-10 font-bold text-[9px] mr-1 ${getMethodColor(req.method)}`}>{req.method}</span>
-          {editingId === req.id && editingType === 'request' ? (
-              <input autoFocus value={editName} onClick={(e)=>e.stopPropagation()} onChange={(e) => setEditName(e.target.value)} onBlur={submitRename} onKeyDown={(e) => e.key === 'Enter' && submitRename()} className="flex-1 text-xs border border-blue-400 rounded px-1 outline-none" />
-          ) : (
-              <span className="truncate flex-1 select-none" onDoubleClick={(e) => { e.stopPropagation(); setEditingId(req.id); setEditingType('request'); setEditName(req.name); }}>{req.name}</span>
-          )}
-      </div>
+      <ListItem
+        key={req.id}
+        isActive={isActive}
+        method={req.method}
+        methodColorClass={getMethodColor(req.method)}
+        title={req.name}
+        titleFallback={origin || 'Request'}
+        subtitle={subtitle}
+        editable
+        editTrigger={reqRenameTicks[req.id]}
+        onRename={(next) => onRenameRequest(req.id, next)}
+        onClick={() => onSelectRequest(req)}
+        onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, type: 'request', id: req.id, data: req }); }}
+        draggable
+        onDragStart={(e) => handleDragStart(e, req.id)}
+        title_={req.name}
+      />
     );
   };
 
@@ -268,6 +277,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onDelete={onDeleteMockRule}
             onDuplicate={onDuplicateMockRule}
             onClear={onClearMockRules}
+            onRename={onRenameMockRule}
           />
         ) : activeTab === 'history' ? (
           <div className="divide-y divide-gray-100">
@@ -302,33 +312,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
                  const { origin, path } = formatUrl(item.url);
                  const isActive = activeRequestId === item.id;
                  return (
-                   <div
-                      key={item.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, item.id)}
-                      className={`px-3 py-2 cursor-pointer transition-colors group relative border-l-4 ${isActive ? 'bg-indigo-50 border-indigo-600' : 'bg-transparent border-transparent hover:bg-white'}`}
-                      onClick={() => onImportLoggedRequest(item)}
-                      onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, type: 'log', id: item.id, data: item }); }}
-                   >
-                       <div className="flex items-center justify-between mb-0.5">
-                         <div className="flex items-center space-x-1.5">
-                            <span className={`text-[10px] font-bold ${getMethodColor(item.method)}`}>{item.method}</span>
-                            <span className="text-[9px] text-gray-400 font-mono">{formatTime(item.timestamp)}</span>
-                         </div>
-                         <div className="flex items-center space-x-2">
-                             <span className={`text-[9px] px-1 rounded font-bold ${item.status >= 400 ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>{item.status || '...'}</span>
-                             <button
-                                onClick={(e) => { e.stopPropagation(); onDeleteLog(item.id); }}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all"
-                                title={deleteLogText}
-                             >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>
-                             </button>
-                         </div>
-                       </div>
-                       <div className={`text-[11px] font-semibold truncate ${isActive ? 'text-indigo-900' : 'text-slate-800'}`}>{origin}</div>
-                       <div className={`text-[10px] truncate font-mono mt-0.5 ${isActive ? 'text-indigo-600/70' : 'text-slate-500'}`}>{path}</div>
-                   </div>
+                   <ListItem
+                     key={item.id}
+                     isActive={isActive}
+                     method={item.method}
+                     methodColorClass={getMethodColor(item.method)}
+                     metaExtras={
+                       <>
+                         <span className="text-[9px] text-gray-400 font-mono">{formatTime(item.timestamp)}</span>
+                         <span className={`text-[9px] px-1 rounded font-bold ${item.status >= 400 ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>{item.status || '...'}</span>
+                       </>
+                     }
+                     title={origin}
+                     titleFallback="—"
+                     subtitle={path || '/'}
+                     onClick={() => onImportLoggedRequest(item)}
+                     onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, type: 'log', id: item.id, data: item }); }}
+                     draggable
+                     onDragStart={(e) => handleDragStart(e, item.id)}
+                     hoverActions={
+                       <button
+                         onClick={(e) => { e.stopPropagation(); onDeleteLog(item.id); }}
+                         className="p-0.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"
+                         title={deleteLogText}
+                       >
+                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2}/></svg>
+                       </button>
+                     }
+                   />
                  );
              })}
              {filteredHistory.length === 0 && history.length > 0 && (
@@ -402,7 +413,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth={2}/></svg>
                         {copyCurlText}
                       </button>
-                      <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { setEditingId(contextMenu.id); setEditingType('request'); setEditName(contextMenu.data.name); setContextMenu(null); }}>
+                      <button className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center" onClick={() => { setReqRenameTicks(prev => ({ ...prev, [contextMenu.id]: (prev[contextMenu.id] || 0) + 1 })); setContextMenu(null); }}>
                         <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" strokeWidth={2}/></svg>
                         {renameText}
                       </button>

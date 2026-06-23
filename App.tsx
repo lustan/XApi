@@ -191,6 +191,12 @@ const App: React.FC = () => {
       setTabs(prev => prev.map(t => t.id === updated.id ? { ...t, title: updated.name || 'Mock', mockData: updated } : t));
   };
 
+  const handleRenameMockRule = (id: string, newName: string) => {
+      const found = mockRules.find(r => r.id === id);
+      if (!found) return;
+      handleUpdateMockRule({ ...found, name: newName });
+  };
+
   const handleDeleteMockRule = (id: string) => {
       const next = mockRules.filter(r => r.id !== id);
       persistMockRules(next);
@@ -556,6 +562,7 @@ const App: React.FC = () => {
           onDeleteMockRule={handleDeleteMockRule}
           onDuplicateMockRule={handleDuplicateMockRule}
           onClearMockRules={handleClearMockRules}
+          onRenameMockRule={handleRenameMockRule}
           onMockFromLog={handleMockFromLog}
         />
       )}

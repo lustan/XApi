@@ -439,6 +439,10 @@
     "message": "命中",
     "description": "Mock 规则命中次数标签"
   },
+  "mockRuleNamePlaceholder": {
+    "message": "规则名称",
+    "description": "重命名 Mock 规则时的输入占位符"
+  },
   "mockThis": {
     "message": "为此响应创建挡板",
     "description": "在捕获请求右键菜单中创建 Mock 规则"

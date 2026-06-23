@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MockRule } from '../types';
 import { formatUrl, getMethodColor } from '../utils';
+import { ListItem } from './ListItem';
 
 interface MockListProps {
   rules: MockRule[];
@@ -13,6 +14,7 @@ interface MockListProps {
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   onClear: () => void;
+  onRename: (id: string, newName: string) => void;
 }
 
 const t = (key: string, fallback: string) => {
@@ -39,9 +41,12 @@ const splitPattern = (pattern: string): { host: string; uri: string } => {
 
 export const MockList: React.FC<MockListProps> = ({
   rules, globalEnabled, activeRuleId,
-  onSelect, onCreate, onToggleGlobal, onToggleRule, onDelete, onDuplicate, onClear
+  onSelect, onCreate, onToggleGlobal, onToggleRule, onDelete, onDuplicate, onClear, onRename
 }) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
+  // Per-rule monotonic counter; bumping the entry triggers ListItem's
+  // editTrigger effect for that row.
+  const [renameTicks, setRenameTicks] = useState<Record<string, number>>({});
 
   React.useEffect(() => {
     const close = () => setContextMenu(null);
@@ -57,7 +62,9 @@ export const MockList: React.FC<MockListProps> = ({
   const hitsLabel = t('mockHits', 'Hits');
   const deleteText = t('delete', 'Delete');
   const duplicateText = t('duplicate', 'Duplicate');
+  const renameText = t('rename', 'Rename');
   const clearText = t('clear', 'Clear');
+  const ruleNamePlaceholder = t('mockRuleNamePlaceholder', 'Rule name');
 
   return (
     <div className="flex flex-col h-full">
@@ -106,45 +113,50 @@ export const MockList: React.FC<MockListProps> = ({
               const { host, uri } = splitPattern(r.urlPattern);
               const ruleActivating = globalEnabled && r.enabled;
               const rulePausedByGlobal = !globalEnabled && r.enabled;
+              // Title uses the user-provided name; when blank we fall back to
+              // host (or "ANY" for path-only patterns) so the row stays
+              // identifiable. Subtitle drops host when it has already been
+              // promoted to title — otherwise the two rows would say the
+              // same thing.
+              const titleFallback = host || 'ANY';
+              const subtitle = r.name
+                ? `${host}${uri || ''}` || '/'
+                : (uri || '/');
+
+              const toggleDot = (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleRule(r.id); }}
+                  title={r.enabled ? (globalEnabled ? 'Disable' : 'Paused') : 'Enable'}
+                  className={`flex h-3.5 w-3.5 items-center justify-center rounded-full flex-shrink-0 transition-colors ${r.enabled ? 'bg-red-50' : 'bg-transparent'}`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full transition-all ${ruleActivating ? 'bg-red-500 animate-pulse shadow-[0_0_0_2px_rgba(239,68,68,0.16)]' : rulePausedByGlobal ? 'bg-red-300' : 'bg-gray-300'}`} />
+                </button>
+              );
+
               return (
-                <div
+                <ListItem
                   key={r.id}
+                  isActive={isActive}
+                  metaLeading={toggleDot}
+                  method={r.method}
+                  methodColorClass={getMethodColor(r.method === 'ANY' ? '' : r.method)}
+                  metaExtras={
+                    <>
+                      <span className="text-[10px] text-gray-400 uppercase">{r.mode === 'replace' ? 'replace' : 'patch'}</span>
+                      <span className="text-[9px] text-gray-400 ml-1">{hitsLabel}: {r.hitCount || 0}</span>
+                    </>
+                  }
+                  title={r.name}
+                  titleFallback={titleFallback}
+                  subtitle={subtitle}
+                  editable
+                  editPlaceholder={ruleNamePlaceholder}
+                  editTrigger={renameTicks[r.id]}
+                  onRename={(next) => onRename(r.id, next)}
                   onClick={() => onSelect(r)}
                   onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, id: r.id }); }}
-                  title={r.name || undefined}
-                  className={`px-3 py-2 cursor-pointer transition-colors group relative border-l-4 ${isActive ? 'bg-indigo-50 border-indigo-600' : 'bg-transparent border-transparent hover:bg-white'}`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center space-x-1.5 min-w-0">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onToggleRule(r.id); }}
-                        title={r.enabled ? (globalEnabled ? 'Disable' : 'Paused') : 'Enable'}
-                        className={`flex h-3.5 w-3.5 items-center justify-center rounded-full flex-shrink-0 transition-colors ${r.enabled ? 'bg-red-50' : 'bg-transparent'}`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full transition-all ${ruleActivating ? 'bg-red-500 animate-pulse shadow-[0_0_0_2px_rgba(239,68,68,0.16)]' : rulePausedByGlobal ? 'bg-red-300' : 'bg-gray-300'}`} />
-                      </button>
-                      <span className={`text-[10px] font-bold ${getMethodColor(r.method === 'ANY' ? '' : r.method)}`}>{r.method}</span>
-                      <span className="text-[10px] text-gray-400 uppercase">{r.mode === 'replace' ? 'replace' : 'patch'}</span>
-                    </div>
-                    <span className="text-[9px] text-gray-400">
-                      {hitsLabel}: {r.hitCount || 0}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span
-                      className={`text-xs font-semibold truncate ${isActive ? 'text-indigo-900' : 'text-slate-800'} ${host ? '' : 'italic text-gray-400'}`}
-                      title={host || 'ANY'}
-                    >
-                      {host || 'ANY'}
-                    </span>
-                    <span
-                      className={`text-[10px] truncate font-mono ${isActive ? 'text-indigo-600/70' : 'text-slate-500'}`}
-                      title={uri || '—'}
-                    >
-                      {uri || '—'}
-                    </span>
-                  </div>
-                </div>
+                  title_={r.name || undefined}
+                />
               );
             })}
           </div>
@@ -156,6 +168,17 @@ export const MockList: React.FC<MockListProps> = ({
           className="fixed bg-white border border-gray-200 shadow-xl rounded-md py-1.5 z-[100] w-44 animate-fadeIn border-t-2 border-t-indigo-500"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
+          <button
+            className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center"
+            onClick={() => {
+              const id = contextMenu.id;
+              setRenameTicks(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+              setContextMenu(null);
+            }}
+          >
+            <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            {renameText}
+          </button>
           <button
             className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center"
             onClick={() => { onDuplicate(contextMenu.id); setContextMenu(null); }}

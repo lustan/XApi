@@ -439,6 +439,10 @@
     "message": "Hits",
     "description": "Label for hit count of a mock rule"
   },
+  "mockRuleNamePlaceholder": {
+    "message": "Rule name",
+    "description": "Placeholder shown when renaming a mock rule"
+  },
   "mockThis": {
     "message": "Mock this response",
     "description": "Context menu label to create a mock rule from a captured request"
