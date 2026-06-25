@@ -372,7 +372,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     >
                         <div className="flex items-center px-2 py-1.5 hover:bg-gray-200 cursor-pointer group" onClick={() => onToggleCollapse(col.id)} onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, type: 'collection', id: col.id, data: col }); }}>
                             <svg className={`w-3.5 h-3.5 text-gray-400 mr-1 transform transition-transform ${col.collapsed ? '-rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-                            <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+                            {col.collapsed ? (
+                                <svg className="w-4 h-4 text-yellow-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v1H2V6z"/><path d="M2 10h16v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                            ) : (
+                                <svg className="w-4 h-4 text-yellow-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h4l2 2h3a2 2 0 012 2v1H4.5a2 2 0 00-1.94 1.515L2 12.755V6z"/><path d="M4.5 10h13.32a1 1 0 01.97 1.243l-1 4A1 1 0 0116.82 16H3.5a1 1 0 01-.97-1.243l1-4A1 1 0 014.5 10z"/></svg>
+                            )}
                             {editingId === col.id && editingType === 'collection' ? (
                                 <input autoFocus value={editName} onClick={(e)=>e.stopPropagation()} onChange={(e) => setEditName(e.target.value)} onBlur={submitRename} onKeyDown={(e) => e.key === 'Enter' && submitRename()} className="flex-1 text-sm border border-blue-400 rounded px-1 outline-none h-6" />
                             ) : (
