@@ -1,18 +1,52 @@
 <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <linearGradient id="c_bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#2D8CFF" />
-            <stop offset="100%" stop-color="#7C3AED" />
-        </linearGradient>
-    </defs>
+  <defs>
+    <!-- Deep obsidian-to-pine terminal backdrop -->
+    <linearGradient id="xapi_bg" x1="8" y1="4" x2="120" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="55%" stop-color="#0B192C" />
+      <stop offset="100%" stop-color="#064E3B" />
+    </linearGradient>
 
-    <!-- 底座铺满整个画布，无空白边框 -->
-    <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#c_bg)" />
+    <!-- Subtle emerald terminal glow -->
+    <radialGradient id="xapi_glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(80 64) rotate(135) scale(72)">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.32" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
+    </radialGradient>
 
-    <!-- 箭头 X：两组对向箭头，放大占满区域 -->
-    <path d="M34 32 L60 64 L34 96" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-    <path d="M94 32 L68 64 L94 96" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <!-- Crisp top-left to bottom-right inner rim -->
+    <linearGradient id="xapi_rim" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399" stop-opacity="0.32" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0.10" />
+    </linearGradient>
 
-    <!-- 中心点：两组箭头汇聚，象征请求交汇 -->
-    <circle cx="64" cy="64" r="6" fill="#FFFFFF" />
+    <!-- Left chevron (> Outbound Request): pure bright white -->
+    <linearGradient id="xapi_left" x1="22" y1="28" x2="58" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <!-- Right chevron (< Mock / Response): luminous terminal emerald -->
+    <linearGradient id="xapi_right" x1="70" y1="28" x2="106" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6EE7B7" />
+      <stop offset="50%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle base -->
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#xapi_bg)" />
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#xapi_glow)" />
+  <rect x="1.25" y="1.25" width="125.5" height="125.5" rx="26.75" stroke="url(#xapi_rim)" stroke-width="2.5" />
+
+  <!-- Left chevron (>): solid precision prism arm -->
+  <path
+    d="M24.5 28 H36.5 Q39.5 28 41.0 30.6 L56.8 59.1 Q59.5 64 56.8 68.9 L41.0 97.4 Q39.5 100 36.5 100 H24.5 Q21.3 100 22.8 97.2 L40.5 65.4 Q41.3 64 40.5 62.6 L22.8 30.8 Q21.3 28 24.5 28 Z"
+    fill="url(#xapi_left)"
+  />
+
+  <!-- Right chevron (<): solid luminous emerald prism arm -->
+  <path
+    d="M103.5 28 H91.5 Q88.5 28 87.0 30.6 L71.2 59.1 Q68.5 64 71.2 68.9 L87.0 97.4 Q88.5 100 91.5 100 H103.5 Q106.7 100 105.2 97.2 L87.5 65.4 Q86.7 64 87.5 62.6 L105.2 30.8 Q106.7 28 103.5 28 Z"
+    fill="url(#xapi_right)"
+  />
 </svg>

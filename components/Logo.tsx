@@ -11,8 +11,8 @@ interface LogoProps {
 
 /**
  * XApi Central Logo Component
- * Design: Logic Prism v5.0
- * Colors: Logic Blue (#00F2FF) & Creative Purple (#FF00E5)
+ * Design: Cyber Terminal Emerald Prism
+ * Colors: Deep Obsidian (#0F172A), Pine (#064E3B), Emerald (#10B981 / #34D399), & Crisp White (#FFFFFF)
  */
 export const Logo: React.FC<LogoProps> = ({
   className = "",
