@@ -218,14 +218,24 @@ export const paramsToQueryString = (params: KeyValue[]): string => {
     .join('&');
 };
 
+const safeDecodeURIComponent = (str: string): string => {
+  try {
+    return decodeURIComponent(str);
+  } catch {
+    return str;
+  }
+};
+
 export const queryStringToParams = (query: string): KeyValue[] => {
   if (!query) return [];
   return query.split('&').map(pair => {
-    const [key, value] = pair.split('=');
+    const separatorIndex = pair.indexOf('=');
+    const rawKey = separatorIndex >= 0 ? pair.slice(0, separatorIndex) : pair;
+    const rawValue = separatorIndex >= 0 ? pair.slice(separatorIndex + 1) : '';
     return {
       id: generateId(),
-      key: decodeURIComponent(key || ''),
-      value: decodeURIComponent(value || ''),
+      key: safeDecodeURIComponent(rawKey),
+      value: safeDecodeURIComponent(rawValue),
       enabled: true
     };
   });

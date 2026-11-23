@@ -241,6 +241,8 @@ window.fetch = async function patchedFetch(input: RequestInfo | URL, init?: Requ
   reportHit(rule.id);
   console.debug(`${TAG} patch-json`, method, url, '→', rule.name, `(${n} fields)`);
   const newHeaders = new Headers(res.headers);
+  newHeaders.delete('content-length');
+  newHeaders.delete('content-encoding');
   newHeaders.set('x-xapi-mock', rule.id);
   return new Response(JSON.stringify(data), {
     status: res.status,
@@ -288,6 +290,11 @@ XHR.prototype.setRequestHeader = function (this: XMLHttpRequest, name: string, v
 };
 
 const fakeXhrResponse = (xhr: XMLHttpRequest, rule: MockRule, body: string, status: number, contentType: string) => {
+  const respType = xhr.responseType || '';
+  let parsedResponse: any = body;
+  if (respType === 'json') {
+    try { parsedResponse = JSON.parse(body); } catch { parsedResponse = null; }
+  }
   // Override read-only properties
   const def = (key: string, val: any) => {
     try { Object.defineProperty(xhr, key, { configurable: true, get: () => val }); } catch { /* noop */ }
@@ -296,9 +303,9 @@ const fakeXhrResponse = (xhr: XMLHttpRequest, rule: MockRule, body: string, stat
   def('status', status);
   def('statusText', 'OK');
   def('responseText', body);
-  def('response', body);
+  def('response', parsedResponse);
   def('responseURL', META.get(xhr)?.url || '');
-  def('responseType', xhr.responseType || '');
+  def('responseType', respType);
   def('getAllResponseHeaders', () => `content-type: ${contentType}\r\nx-xapi-mock: ${rule.id}\r\n`);
   def('getResponseHeader', (name: string) => {
     const lower = name.toLowerCase();
@@ -310,12 +317,17 @@ const fakeXhrResponse = (xhr: XMLHttpRequest, rule: MockRule, body: string, stat
   // Fire events asynchronously to mimic real network
   const fire = (type: string) => {
     try {
-      const ev = new ProgressEvent(type, { lengthComputable: false, loaded: body.length, total: body.length });
-      xhr.dispatchEvent(ev);
+      const ev = type === 'readystatechange'
+        ? new Event('readystatechange')
+        : new ProgressEvent(type, { lengthComputable: false, loaded: body.length, total: body.length });
+      if (typeof xhr.dispatchEvent === 'function') {
+        xhr.dispatchEvent(ev);
+      } else if (type === 'readystatechange' && xhr.onreadystatechange) {
+        xhr.onreadystatechange(ev as any);
+      }
     } catch { /* noop */ }
   };
   setTimeout(() => {
-    try { xhr.onreadystatechange && xhr.onreadystatechange(new Event('readystatechange') as any); } catch { /* noop */ }
     fire('readystatechange');
     fire('load');
     fire('loadend');
@@ -377,20 +389,32 @@ XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
     patched = true;
     const ct = (xhr.getResponseHeader('content-type') || '').toLowerCase();
     if (!ct.includes('json')) return;
+    const isJsonRespType = xhr.responseType === 'json';
     let raw: string | null = null;
-    try { raw = typeof xhr.responseText === 'string' ? xhr.responseText : null; } catch { raw = null; }
-    if (raw == null) return;
+    let data: any = null;
+    if (isJsonRespType) {
+      try {
+        const origObj = xhr.response;
+        if (origObj == null || typeof origObj !== 'object') return;
+        raw = JSON.stringify(origObj);
+        data = JSON.parse(raw);
+      } catch { return; }
+    } else {
+      try { raw = typeof xhr.responseText === 'string' ? xhr.responseText : null; } catch { raw = null; }
+      if (raw == null) return;
+      try { data = JSON.parse(raw); } catch { return; }
+    }
+    if (raw == null || data == null || typeof data !== 'object') return;
     // Forward the ORIGINAL (pre-patch) body for the recorded log.
     try { reportResponse(meta!.url, meta!.method, xhr.status, ct, raw); } catch { /* noop */ }
-    let data: any;
-    try { data = JSON.parse(raw); } catch { return; }
-    if (data == null || typeof data !== 'object') return;
     const n = applyJsonPatches(data, rule.jsonPatches);
     if (n === 0) return;
     const newBody = JSON.stringify(data);
     try {
-      Object.defineProperty(xhr, 'responseText', { configurable: true, get: () => newBody });
-      Object.defineProperty(xhr, 'response', { configurable: true, get: () => newBody });
+      if (!isJsonRespType) {
+        Object.defineProperty(xhr, 'responseText', { configurable: true, get: () => newBody });
+      }
+      Object.defineProperty(xhr, 'response', { configurable: true, get: () => (isJsonRespType ? data : newBody) });
     } catch { /* noop */ }
     reportHit(rule.id);
     console.debug(`${TAG} patch-json(xhr)`, meta!.method, meta!.url, '→', rule.name, `(${n} fields)`);
@@ -404,6 +428,10 @@ XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
     tryPatch();
     if (origOnLoad) return origOnLoad.call(this, ev);
   };
+  try {
+    xhr.addEventListener('readystatechange', () => { if (xhr.readyState === 4) tryPatch(); });
+    xhr.addEventListener('load', tryPatch);
+  } catch { /* noop */ }
 
   return origSend.call(this, body);
 };

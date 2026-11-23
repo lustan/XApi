@@ -113,7 +113,11 @@ const App: React.FC = () => {
         setHistory(logs);
 
         if (result.savedTabs && result.savedTabs.length > 0) {
-            setTabs(result.savedTabs.map((t: TabItem) => t.type === 'welcome' ? { ...t, title: chrome.i18n.getMessage("welcomeTabTitle") } : t));
+            setTabs(result.savedTabs.map((t: TabItem) =>
+                t.type === 'welcome'
+                    ? { ...t, title: chrome.i18n.getMessage("welcomeTabTitle") }
+                    : { ...t, isLoading: false }
+            ));
             if (result.savedActiveTabId) setActiveTabId(result.savedActiveTabId);
         }
 
@@ -165,18 +169,20 @@ const App: React.FC = () => {
   }, [tabs, activeTabId]);
 
   const openRequestInTab = (req: HttpRequest) => {
-      const existing = tabs.find(t => t.id === req.id);
-      if (existing) { setActiveTabId(req.id); return; }
-      const newTab: TabItem = { id: req.id, type: 'request', title: req.name, method: req.method, data: req, isLoading: false, response: null, error: null };
-      setTabs(prev => prev[0]?.type === 'welcome' ? [newTab] : [...prev, newTab]);
+      setTabs(prev => {
+          if (prev.some(t => t.id === req.id)) return prev;
+          const newTab: TabItem = { id: req.id, type: 'request', title: req.name, method: req.method, data: req, isLoading: false, response: null, error: null };
+          return prev[0]?.type === 'welcome' ? [newTab] : [...prev, newTab];
+      });
       setActiveTabId(req.id);
   };
 
   const openMockRuleInTab = (rule: MockRule) => {
-      const existing = tabs.find(t => t.id === rule.id);
-      if (existing) { setActiveTabId(rule.id); return; }
-      const newTab: TabItem = { id: rule.id, type: 'mock', title: rule.name || 'Mock', mockData: rule };
-      setTabs(prev => prev[0]?.type === 'welcome' ? [newTab] : [...prev, newTab]);
+      setTabs(prev => {
+          if (prev.some(t => t.id === rule.id)) return prev;
+          const newTab: TabItem = { id: rule.id, type: 'mock', title: rule.name || 'Mock', mockData: rule };
+          return prev[0]?.type === 'welcome' ? [newTab] : [...prev, newTab];
+      });
       setActiveTabId(rule.id);
   };
 
@@ -327,6 +333,10 @@ const App: React.FC = () => {
           }
       }
       if (!reqToMove) {
+          const tabReq = tabs.find(t => t.id === reqId)?.data;
+          if (tabReq) reqToMove = tabReq;
+      }
+      if (!reqToMove) {
           const log = history.find(h => h.id === reqId);
           if (log) reqToMove = convertLogToRequest(log);
       }
@@ -378,10 +388,29 @@ const App: React.FC = () => {
       chrome.storage.local.set({ rootRequests: nextRoots, collections: nextCols });
   };
 
-  const handleTabRename = (id: string, newName: string) => handleRenameRequest(id, newName);
+  const handleCreateCollection = () => {
+      const newCol: CollectionItem = { id: generateId(), name: chrome.i18n.getMessage("newCollection"), requests: [], collapsed: false };
+      const next = [...collections, newCol];
+      setCollections(next);
+      chrome.storage.local.set({ collections: next });
+      setSidebarTab('collections');
+  };
+
+  const handleTabRename = (id: string, newName: string) => {
+      const tab = tabs.find(t => t.id === id);
+      if (tab?.type === 'mock') {
+          handleRenameMockRule(id, newName);
+          return;
+      }
+      handleRenameRequest(id, newName);
+  };
 
   const handleSendRequest = async () => {
     if (!activeRequest) return;
+    if (!activeRequest.url.trim()) {
+      setTabs(prev => prev.map(t => t.id === activeRequest.id ? { ...t, isLoading: false, response: null, error: chrome.i18n.getMessage("enterRequestUrl") || 'Enter Request URL' } : t));
+      return;
+    }
     setTabs(prev => prev.map(t => t.id === activeRequest.id ? { ...t, isLoading: true, error: null, response: null } : t));
     const startTime = Date.now();
     try {
@@ -495,6 +524,7 @@ const App: React.FC = () => {
 
   const handleClearAllData = () => {
     if (confirm(chrome.i18n.getMessage("clearAllDataConfirm"))) {
+        initializedRef.current = false;
         chrome.storage.local.clear(() => {
             setCollections([]);
             setHistory([]);
@@ -521,11 +551,15 @@ const App: React.FC = () => {
           activeCapturedId={activeTab?.type === 'request' ? activeTabId : undefined}
           activeMockRuleId={activeTab?.type === 'mock' ? activeTabId : undefined}
           onSelectRequest={openRequestInTab}
-          onCreateCollection={() => { const newCol = { id: generateId(), name: chrome.i18n.getMessage("newCollection"), requests: [], collapsed: false }; const next = [...collections, newCol]; setCollections(next); chrome.storage.local.set({ collections: next }); setSidebarTab('collections'); }}
+          onCreateCollection={handleCreateCollection}
           onCreateRequest={handleCreateRequest}
           onImportCurl={() => setIsCurlModalOpen(true)}
           onClearHistory={() => {
-              const capturedIds = new Set(history.map(h => h.id));
+              const savedIds = new Set([
+                  ...rootRequests.map(r => r.id),
+                  ...collections.flatMap(c => c.requests.map(r => r.id)),
+              ]);
+              const capturedIds = new Set(history.map(h => h.id).filter(id => !savedIds.has(id)));
               setHistory([]);
               chrome.storage.local.set({ logs: [] });
               const nextTabs = tabs.filter(t => t.type !== 'request' || !capturedIds.has(t.id));
@@ -537,10 +571,34 @@ const App: React.FC = () => {
                   if (!nextTabs.find(t => t.id === activeTabId)) setActiveTabId(nextTabs[nextTabs.length - 1].id);
               }
           }}
-          onDeleteLog={(id) => { const next = history.filter(h => h.id !== id); setHistory(next); chrome.storage.local.set({ logs: next }); handleTabClose(id); }}
+          onDeleteLog={(id) => {
+              const next = history.filter(h => h.id !== id);
+              setHistory(next);
+              chrome.storage.local.set({ logs: next });
+              const isSaved = rootRequests.some(r => r.id === id) || collections.some(c => c.requests.some(r => r.id === id));
+              if (!isSaved) handleTabClose(id);
+          }}
           onRenameCollection={(id, name) => { const next = collections.map(c => c.id === id ? { ...c, name } : c); setCollections(next); chrome.storage.local.set({ collections: next }); }}
           onRenameRequest={handleRenameRequest}
-          onDeleteCollection={(id) => { if (confirm(chrome.i18n.getMessage("deleteCollectionConfirm"))) { const next = collections.filter(c => c.id !== id); setCollections(next); chrome.storage.local.set({ collections: next }); } }}
+          onDeleteCollection={(id) => {
+              if (confirm(chrome.i18n.getMessage("deleteCollectionConfirm"))) {
+                  const target = collections.find(c => c.id === id);
+                  const deletedIds = new Set((target?.requests || []).map(r => r.id));
+                  const next = collections.filter(c => c.id !== id);
+                  setCollections(next);
+                  chrome.storage.local.set({ collections: next });
+                  if (deletedIds.size > 0) {
+                      const nextTabs = tabs.filter(t => t.type !== 'request' || !deletedIds.has(t.id));
+                      if (nextTabs.length === 0) {
+                          setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
+                          setActiveTabId('welcome');
+                      } else {
+                          setTabs(nextTabs);
+                          if (!nextTabs.find(t => t.id === activeTabId)) setActiveTabId(nextTabs[nextTabs.length - 1].id);
+                      }
+                  }
+              }
+          }}
           onDeleteRequest={(req) => { const nextRoots = rootRequests.filter(r => r.id !== req.id); const nextCols = collections.map(c => ({ ...c, requests: c.requests.filter(r => r.id !== req.id) })); setRootRequests(nextRoots); setCollections(nextCols); chrome.storage.local.set({ rootRequests: nextRoots, collections: nextCols }); handleTabClose(req.id); }}
           onDuplicateRequest={(reqId) => {
               let found = rootRequests.find(r => r.id === reqId) || collections.flatMap(c => c.requests).find(r => r.id === reqId);
@@ -555,7 +613,7 @@ const App: React.FC = () => {
                   }
               }
           }}
-          onToggleCollapse={(id) => { setCollections(collections.map(c => c.id === id ? { ...c, collapsed: !c.collapsed } : c)); }}
+          onToggleCollapse={(id) => { const next = collections.map(c => c.id === id ? { ...c, collapsed: !c.collapsed } : c); setCollections(next); chrome.storage.local.set({ collections: next }); }}
           onMoveRequest={handleSaveToCollection}
           isRecording={isRecording}
           onToggleRecording={() => { setIsRecording(!isRecording); chrome.storage.local.set({ isRecording: !isRecording }); }}
@@ -595,7 +653,7 @@ const App: React.FC = () => {
                     onRuleChange={handleUpdateMockRule}
                 />
             ) : !activeRequest || activeTabId === 'welcome' ? (
-                <WelcomeScreen onCreateRequest={handleCreateRequest} onCreateCollection={() => {}} onImportCurl={() => setIsCurlModalOpen(true)} />
+                <WelcomeScreen onCreateRequest={handleCreateRequest} onCreateCollection={handleCreateCollection} onImportCurl={() => setIsCurlModalOpen(true)} />
             ) : (
                 <>
                     <RequestHeader request={activeRequest} onRequestChange={updateActiveRequest} onSend={handleSendRequest} isSending={activeIsLoading} />

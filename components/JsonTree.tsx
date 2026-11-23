@@ -61,6 +61,7 @@ const TreeNode: React.FC<NodeProps> = ({
 
   const isOpen = expandedKeys.has(path);
   const indent = { paddingLeft: `${depth * 14}px` };
+  const toggle = useCallback(() => setExpanded(path, !isOpen), [isOpen, path, setExpanded]);
 
   // Primitive leaf
   if (!isContainer(value)) {
@@ -88,8 +89,6 @@ const TreeNode: React.FC<NodeProps> = ({
   const summary = isArray
     ? `${entries.length} ${entries.length === 1 ? 'item' : 'items'}`
     : `${entries.length} ${entries.length === 1 ? 'key' : 'keys'}`;
-
-  const toggle = useCallback(() => setExpanded(path, !isOpen), [isOpen, path, setExpanded]);
 
   return (
     <div>

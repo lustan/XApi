@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { HttpRequest, HttpMethod } from '../types';
+import { HttpRequest, HttpMethod, KeyValue } from '../types';
 import { getMethodColor, queryStringToParams } from '../utils';
 
 interface RequestHeaderProps {
@@ -34,17 +34,18 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
     const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newUrl = e.target.value;
         const queryIndex = newUrl.indexOf('?');
-        let newParams = [];
+        const disabledParams = request.params.filter(p => !p.enabled);
+        let parsedParams: KeyValue[] = [];
 
         if (queryIndex !== -1) {
             const queryString = newUrl.substring(queryIndex + 1);
-            newParams = queryStringToParams(queryString);
+            parsedParams = queryStringToParams(queryString);
         }
 
         onRequestChange({
             ...request,
             url: newUrl,
-            params: newParams
+            params: [...parsedParams, ...disabledParams]
         });
     };
 

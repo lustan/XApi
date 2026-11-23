@@ -8,7 +8,7 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    viteStaticCopy({
+    ...viteStaticCopy({
       targets: [
         {
           src: 'manifest.json',
@@ -27,11 +27,17 @@ export default defineConfig({
           dest: 'icons'
         }
       ]
-    })
+    }).filter((plugin) => plugin.apply !== 'serve')
   ],
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+    allowedHosts: true
+  },
   build: {
     rollupOptions: {
       input: {
+        index: resolve('index.html'),
         popup: resolve('popup.html'),
         panel: resolve('panel.html'),
         devtools: resolve('devtools.html'),

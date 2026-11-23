@@ -10,7 +10,19 @@ const MESSAGE_MAP: Record<Exclude<AppLanguage, 'system'>, Record<string, { messa
   zh_CN: zhCNMessages,
 };
 
-const originalGetMessage = chrome.i18n.getMessage.bind(chrome.i18n);
+const fallbackGetMessage = (key: string, substitutions?: string | string[]) => {
+  const browserLang =
+    typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('zh')
+      ? 'zh_CN'
+      : 'en';
+  const message = MESSAGE_MAP[browserLang]?.[key]?.message ?? MESSAGE_MAP.en?.[key]?.message ?? '';
+  return message ? formatMessage(message, substitutions) : '';
+};
+
+const originalGetMessage =
+  typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getMessage === 'function'
+    ? chrome.i18n.getMessage.bind(chrome.i18n)
+    : fallbackGetMessage;
 let activeLanguage: AppLanguage = 'system';
 
 const formatMessage = (message: string, substitutions?: string | string[]) => {
@@ -21,13 +33,15 @@ const formatMessage = (message: string, substitutions?: string | string[]) => {
 
 export const applyLanguage = (language: AppLanguage) => {
   activeLanguage = language;
-  chrome.i18n.getMessage = ((key: string, substitutions?: string | string[]) => {
-    if (activeLanguage !== 'system') {
-      const message = MESSAGE_MAP[activeLanguage]?.[key]?.message;
-      if (message) return formatMessage(message, substitutions);
-    }
-    return originalGetMessage(key, substitutions as any);
-  }) as typeof chrome.i18n.getMessage;
+  if (typeof chrome !== 'undefined' && chrome.i18n) {
+    chrome.i18n.getMessage = ((key: string, substitutions?: string | string[]) => {
+      if (activeLanguage !== 'system') {
+        const message = MESSAGE_MAP[activeLanguage]?.[key]?.message;
+        if (message) return formatMessage(message, substitutions);
+      }
+      return originalGetMessage(key, substitutions as any);
+    }) as typeof chrome.i18n.getMessage;
+  }
 };
 
 applyLanguage('system');

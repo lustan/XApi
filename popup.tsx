@@ -1,4 +1,5 @@
 
+import './chromePolyfill';
 import React, { useEffect, useState, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
@@ -51,7 +52,9 @@ const Popup = () => {
   const languageText = chrome.i18n.getMessage("language") || 'Language';
   const systemLanguageText = chrome.i18n.getMessage("systemLanguage") || 'System';
   const englishText = chrome.i18n.getMessage("english") || 'English';
-  const chineseText = chrome.i18n.getMessage("chinese") || '中文';
+  const chineseText = chrome.i18n.getMessage("chineseSimplified") || '简体中文';
+  const activatingText = chrome.i18n.getMessage("mockGlobalActive") || 'Activating';
+  const pausedText = chrome.i18n.getMessage("paused") || 'Paused';
   const resetWorkspaceText = chrome.i18n.getMessage("resetWorkspace") || 'Reset Workspace';
 
   useEffect(() => {
@@ -305,7 +308,7 @@ const Popup = () => {
       {activeTab === 'capture' && (
         <>
           <div className="px-3 py-2 bg-gray-100 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-             <span className="text-xs text-gray-600">{isRecording ? 'Activating' : 'Paused'}</span>
+             <span className="text-xs text-gray-600">{isRecording ? activatingText : pausedText}</span>
              <Toggle on={isRecording} onClick={toggleRecording} label={captureTabText} title={isRecording ? stopRecordingText : startRecordingText} />
           </div>
           <div className="px-2 py-2 bg-gray-100 border-b border-gray-200 flex-shrink-0">
@@ -380,8 +383,8 @@ const Popup = () => {
           <div className="px-3 py-2 bg-gray-100 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
              <span className="text-xs text-gray-600">
                 {mockGlobalEnabled
-                   ? 'Activating'
-                   : 'Paused'}
+                   ? activatingText
+                   : pausedText}
              </span>
              <Toggle on={mockGlobalEnabled} onClick={toggleMockGlobal} label={mockTabText} />
           </div>
@@ -441,8 +444,8 @@ const Popup = () => {
           <div className="px-3 py-2 bg-gray-100 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
              <span className="text-xs text-gray-600">
                 {globalHeadersEnabled
-                   ? 'Activating'
-                   : 'Paused'}
+                   ? activatingText
+                   : pausedText}
              </span>
              <Toggle on={globalHeadersEnabled} onClick={toggleHeadersEnabled} label={headerTabText} />
           </div>

@@ -378,7 +378,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <svg className="w-4 h-4 text-yellow-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h4l2 2h3a2 2 0 012 2v1H4.5a2 2 0 00-1.94 1.515L2 12.755V6z"/><path d="M4.5 10h13.32a1 1 0 01.97 1.243l-1 4A1 1 0 0116.82 16H3.5a1 1 0 01-.97-1.243l1-4A1 1 0 014.5 10z"/></svg>
                             )}
                             {editingId === col.id && editingType === 'collection' ? (
-                                <input autoFocus value={editName} onClick={(e)=>e.stopPropagation()} onChange={(e) => setEditName(e.target.value)} onBlur={submitRename} onKeyDown={(e) => e.key === 'Enter' && submitRename()} className="flex-1 text-sm border border-blue-400 rounded px-1 outline-none h-6" />
+                                <input autoFocus value={editName} onClick={(e)=>e.stopPropagation()} onChange={(e) => setEditName(e.target.value)} onBlur={submitRename} onKeyDown={(e) => { if (e.key === 'Enter') submitRename(); else if (e.key === 'Escape') { setEditingId(null); setEditingType(null); } }} className="flex-1 text-sm border border-blue-400 rounded px-1 outline-none h-6" />
                             ) : (
                                 <span className="text-sm font-bold text-gray-700 flex-1 truncate select-none" onDoubleClick={(e) => { e.stopPropagation(); setEditingId(col.id); setEditingType('collection'); setEditName(col.name); }}>{col.name}</span>
                             )}

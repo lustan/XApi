@@ -213,7 +213,21 @@ const ResponseContent = ({ body, size }: { body: string; size: number }) => {
         try {
             await navigator.clipboard.writeText(body);
         } catch {
-            setFormatError(getMessage('copyFailed', 'Copy failed'));
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = body;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-9999px';
+                textArea.style.top = '0';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                if (!ok) setFormatError(getMessage('copyFailed', 'Copy failed'));
+            } catch {
+                setFormatError(getMessage('copyFailed', 'Copy failed'));
+            }
         }
     };
 

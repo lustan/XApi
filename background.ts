@@ -14,6 +14,11 @@ const GLOBAL_HEADERS_ENABLED_KEY = 'globalHeadersEnabled';
 
 // Store pending requests in memory to correlate headers/body/completion
 const pendingRequests: Record<string, any> = {};
+let isRecordingCached = false;
+
+chrome.storage.local.get(['isRecording'], (result) => {
+  isRecordingCached = !!result?.isRecording;
+});
 
 const updateBadge = (recording: boolean) => {
   if (chrome.action) {
@@ -27,6 +32,7 @@ const updateBadge = (recording: boolean) => {
 };
 
 chrome.runtime.onInstalled.addListener(() => {
+  isRecordingCached = false;
   chrome.storage.local.set({ isRecording: false, logs: [] });
   updateBadge(false);
   // Clear any existing dynamic replay rule on startup
@@ -40,12 +46,17 @@ chrome.runtime.onInstalled.addListener(() => {
 // Session rules are cleared when the service worker/browser restarts, so
 // rebuild the global header rule whenever the SW spins back up.
 chrome.runtime.onStartup.addListener(() => {
+  chrome.storage.local.get(['isRecording'], (result) => {
+    isRecordingCached = !!result?.isRecording;
+    updateBadge(isRecordingCached);
+  });
   applyGlobalHeaderRule();
 });
 
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.isRecording) {
-    updateBadge(changes.isRecording.newValue);
+    isRecordingCached = !!changes.isRecording.newValue;
+    updateBadge(isRecordingCached);
   }
   if (changes[GLOBAL_HEADERS_KEY] || changes[GLOBAL_HEADERS_ENABLED_KEY]) {
     applyGlobalHeaderRule();
@@ -104,14 +115,27 @@ const applyGlobalHeaderRule = () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'SET_REQUEST_HEADERS') {
         const { url, headers } = message;
-        const ruleId = 1;
-        const requestHeaders = headers.map((h: any) => ({
-            header: h.key || h.name,
-            operation: chrome.declarativeNetRequest.HeaderOperation.SET,
-            value: h.value
-        }));
+        const ruleId = REPLAY_HEADER_RULE_ID;
+        const requestHeaders = (headers || [])
+            .filter((h: any) => h && (h.key || h.name))
+            .map((h: any) => ({
+                header: h.key || h.name,
+                operation: chrome.declarativeNetRequest.HeaderOperation.SET,
+                value: h.value ?? ''
+            }));
 
-        const cleanUrl = url.split('?')[0];
+        const cleanUrl = typeof url === 'string' ? url.split('?')[0].trim() : '';
+
+        if (!cleanUrl || requestHeaders.length === 0) {
+            chrome.declarativeNetRequest.updateSessionRules({
+                removeRuleIds: [ruleId]
+            }).then(() => {
+                sendResponse({ success: true });
+            }).catch(err => {
+                sendResponse({ success: false, error: err.message });
+            });
+            return true;
+        }
 
         const rule = {
             id: ruleId,
@@ -142,9 +166,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.type === 'CLEAR_REQUEST_HEADERS') {
         chrome.declarativeNetRequest.updateSessionRules({
-            removeRuleIds: [1]
+            removeRuleIds: [REPLAY_HEADER_RULE_ID]
         }).then(() => {
             sendResponse({ success: true });
+        }).catch(err => {
+            sendResponse({ success: false, error: err.message });
         });
         return true;
     }
@@ -154,10 +180,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'XAPI_RESPONSE_BODY' && message.payload) {
         const { url, method, body, truncated } = message.payload;
         if (typeof url !== 'string' || typeof body !== 'string') return;
-        chrome.storage.local.get(['isRecording'], (result) => {
-            if (!result.isRecording) return;
-            attachResponseBody(url, method, body, !!truncated);
-        });
+        if (!isRecordingCached) return;
+        attachResponseBody(url, method, body, !!truncated);
         return; // no async sendResponse
     }
 });
@@ -270,28 +294,24 @@ const getOrCreatePending = (requestId: string) => {
 // 1. Capture Basic Info & Body
 chrome.webRequest.onBeforeRequest.addListener(
   (details: any) => {
-    if (isExtensionRequest(details) || details.type === 'ping' || !isApiRequest(details)) return;
+    if (!isRecordingCached || isExtensionRequest(details) || details.type === 'ping' || !isApiRequest(details)) return;
 
-    chrome.storage.local.get(['isRecording'], (result) => {
-      if (!result.isRecording) return;
+    const log = getOrCreatePending(details.requestId);
+    log.url = details.url;
+    log.method = details.method;
+    log.type = details.type;
 
-      const log = getOrCreatePending(details.requestId);
-      log.url = details.url;
-      log.method = details.method;
-      log.type = details.type;
-
-      if (details.requestBody) {
-        if (details.requestBody.raw && details.requestBody.raw[0]) {
-           const enc = new TextDecoder("utf-8");
-           try { log.requestBody = enc.decode(details.requestBody.raw[0].bytes); }
-           catch (e) { log.requestBody = "[Binary Data]"; }
-        } else if (details.requestBody.formData) {
-           log.requestBody = details.requestBody.formData;
-        }
+    if (details.requestBody) {
+      if (details.requestBody.raw && details.requestBody.raw[0]) {
+         const enc = new TextDecoder("utf-8");
+         try { log.requestBody = enc.decode(details.requestBody.raw[0].bytes); }
+         catch (e) { log.requestBody = "[Binary Data]"; }
+      } else if (details.requestBody.formData) {
+         log.requestBody = details.requestBody.formData;
       }
+    }
 
-      saveLog(log);
-    });
+    saveLog(log);
   },
   { urls: ["<all_urls>"] },
   ["requestBody"]
@@ -300,18 +320,14 @@ chrome.webRequest.onBeforeRequest.addListener(
 // 2. Capture Request Headers
 chrome.webRequest.onBeforeSendHeaders.addListener(
   (details: any) => {
-    if (isExtensionRequest(details) || !isApiRequest(details)) return;
+    if (!isRecordingCached || isExtensionRequest(details) || !isApiRequest(details)) return;
 
-    chrome.storage.local.get(['isRecording'], (result) => {
-        if (!result.isRecording) return;
+    const log = getOrCreatePending(details.requestId);
+    const headers: Record<string, string> = {};
+    details.requestHeaders?.forEach((h: any) => { headers[h.name] = h.value || ''; });
+    log.requestHeaders = { ...log.requestHeaders, ...headers };
 
-        const log = getOrCreatePending(details.requestId);
-        const headers: Record<string, string> = {};
-        details.requestHeaders?.forEach((h: any) => { headers[h.name] = h.value || ''; });
-        log.requestHeaders = { ...log.requestHeaders, ...headers };
-
-        saveLog(log);
-    });
+    saveLog(log);
   },
   { urls: ["<all_urls>"] },
   ["requestHeaders", "extraHeaders"]
@@ -320,18 +336,14 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 // 3. Capture Response Headers
 chrome.webRequest.onHeadersReceived.addListener(
   (details: any) => {
-    if (isExtensionRequest(details) || !isApiRequest(details)) return;
+    if (!isRecordingCached || isExtensionRequest(details) || !isApiRequest(details)) return;
 
-    chrome.storage.local.get(['isRecording'], (result) => {
-        if (!result.isRecording) return;
+    const log = getOrCreatePending(details.requestId);
+    const headers: Record<string, string> = {};
+    details.responseHeaders?.forEach((h: any) => { headers[h.name] = h.value || ''; });
+    log.responseHeaders = { ...log.responseHeaders, ...headers };
 
-        const log = getOrCreatePending(details.requestId);
-        const headers: Record<string, string> = {};
-        details.responseHeaders?.forEach((h: any) => { headers[h.name] = h.value || ''; });
-        log.responseHeaders = { ...log.responseHeaders, ...headers };
-
-        saveLog(log);
-    });
+    saveLog(log);
   },
   { urls: ["<all_urls>"] },
   ["responseHeaders", "extraHeaders"]

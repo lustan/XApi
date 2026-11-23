@@ -172,20 +172,19 @@ export const MockEditor: React.FC<MockEditorProps> = ({ rule, history, onRuleCha
   const update = (partial: Partial<MockRule>) => onRuleChange({ ...rule, ...partial });
   const [bodyView, setBodyView] = useState<'edit' | 'preview'>('edit');
 
-  // Find sample real responses for this URL pattern (best-effort).
+  // Find sample real responses for this URL pattern (best-effort, preferring captures with responseBody).
   const sampleData = useMemo(() => {
     if (!rule.urlPattern) return null;
-    const matched = history.find(h => h.url.startsWith(rule.urlPattern));
-    return matched || null;
+    const matches = history.filter(h => h.url.startsWith(rule.urlPattern));
+    return matches.find(h => !!h.responseBody) || matches[0] || null;
   }, [history, rule.urlPattern, rule.matchMode]);
 
   const jsonHint = useMemo(() => tryFormatJson(rule.replaceBody || ''), [rule.replaceBody]);
 
-  // Get JSON path autocomplete options from a sample request body if available.
-  // (We don't have response bodies stored in history, but we render hints from body if it's JSON.)
+  // Get JSON path autocomplete options from a sample response body (falling back to request body).
   const pathOptions = useMemo(() => {
     if (!sampleData) return [];
-    let body: any = sampleData.requestBody;
+    let body: any = sampleData.responseBody ?? sampleData.requestBody;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { body = null; }
     }
@@ -236,7 +235,7 @@ export const MockEditor: React.FC<MockEditorProps> = ({ rule, history, onRuleCha
 
   const fillFromHistory = () => {
     if (!sampleData) return;
-    let body: any = sampleData.requestBody;
+    let body: any = sampleData.responseBody ?? sampleData.requestBody;
     if (typeof body === 'object' && body) body = JSON.stringify(body, null, 2);
     update({ replaceBody: typeof body === 'string' ? body : (rule.replaceBody || '') });
   };

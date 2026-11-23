@@ -37,7 +37,14 @@ const BodySyntaxSelect = ({
     const htmlText = chrome.i18n.getMessage("html");
     const xmlText = chrome.i18n.getMessage("xml");
 
-    const options = [jsonText, textText, htmlText, xmlText];
+    const options: { value: 'json' | 'text' | 'html' | 'xml'; label: string }[] = [
+        { value: 'json', label: jsonText },
+        { value: 'text', label: textText },
+        { value: 'html', label: htmlText },
+        { value: 'xml', label: xmlText },
+    ];
+    const normalizedValue = (value || 'json').toLowerCase();
+    const activeOption = options.find(opt => opt.value === normalizedValue) || options[0];
 
     return (
         <div className="relative" ref={ref}>
@@ -45,18 +52,18 @@ const BodySyntaxSelect = ({
                 onClick={() => setIsOpen(!isOpen)}
                 className="bg-white border border-gray-200 rounded px-3 py-1 text-xs text-gray-600 focus:outline-none focus:border-green-500 flex items-center hover:bg-gray-50 transition-colors w-24 justify-between"
             >
-                <span>{value || jsonText}</span>
+                <span>{activeOption.label}</span>
                 <svg className={`fill-current h-2 w-2 text-gray-400 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
             </button>
             {isOpen && (
                 <div className="absolute right-0 top-full mt-1 w-24 bg-white border border-gray-200 shadow-lg rounded z-50 py-1 flex flex-col">
                     {options.map(opt => (
                         <button
-                            key={opt}
-                            onClick={() => { onChange(opt); setIsOpen(false); }}
-                            className={`text-left px-3 py-1.5 text-xs hover:bg-green-50 hover:text-green-700 ${value === opt ? 'text-green-600 font-bold' : 'text-gray-700'}`}
+                            key={opt.value}
+                            onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                            className={`text-left px-3 py-1.5 text-xs hover:bg-green-50 hover:text-green-700 ${normalizedValue === opt.value ? 'text-green-600 font-bold' : 'text-gray-700'}`}
                         >
-                            {opt}
+                            {opt.label}
                         </button>
                     ))}
                 </div>
@@ -207,7 +214,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
                                 >
                                     {formatJSONText}
                                 </button>
-                                {(request.bodyRawType || jsonText) === jsonText && (
+                                {((request.bodyRawType || 'json').toLowerCase() === 'json') && (
                                     <div className="inline-flex rounded border border-gray-200 overflow-hidden text-[10px]">
                                         <button
                                             type="button"
@@ -228,11 +235,11 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({ request, onRequest
                            </div>
 
                            <BodySyntaxSelect
-                                value={request.bodyRawType || jsonText}
+                                value={request.bodyRawType || 'json'}
                                 onChange={(val) => onRequestChange({ ...request, bodyRawType: val })}
                            />
                        </div>
-                       {rawBodyView === 'preview' && (request.bodyRawType || jsonText) === jsonText ? (
+                       {rawBodyView === 'preview' && (request.bodyRawType || 'json').toLowerCase() === 'json' ? (
                            <div className="flex-1 w-full bg-gray-50 border border-gray-200 rounded p-2 overflow-auto">
                                <JsonTree value={request.bodyRaw || ''} />
                            </div>
