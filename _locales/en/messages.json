@@ -610,5 +610,73 @@
   "chineseSimplified": {
     "message": "Simplified Chinese",
     "description": "Simplified Chinese language option"
+  },
+  "copied": {
+    "message": "Copied",
+    "description": "Copied confirmation label"
+  },
+  "copyCurlTooltip": {
+    "message": "Copy as cURL",
+    "description": "Tooltip for copy as cURL button"
+  },
+  "sendingRequest": {
+    "message": "Sending request...",
+    "description": "Loading text while request is in flight"
+  },
+  "collectionsEmpty": {
+    "message": "No saved requests yet",
+    "description": "Empty state title for collections tab"
+  },
+  "collectionsEmptyHint": {
+    "message": "Create a request, group with collections, or import a cURL command.",
+    "description": "Empty state description for collections tab"
+  },
+  "capturedEmptyHint": {
+    "message": "Turn on Capture above and browse a page to record requests.",
+    "description": "Empty state hint for captured requests list"
+  },
+  "mockGlobalPausedBanner": {
+    "message": "Global Mock is paused. Enable it to apply this rule.",
+    "description": "Banner shown in MockEditor when global mock switch is off"
+  },
+  "enableNow": {
+    "message": "Enable now",
+    "description": "Quick action button to turn on global mock"
+  },
+  "authType": {
+    "message": "Auth Type",
+    "description": "Label for authorization type selector"
+  },
+  "authNone": {
+    "message": "No Auth",
+    "description": "No authorization option"
+  },
+  "authBearer": {
+    "message": "Bearer Token",
+    "description": "Bearer token authorization option"
+  },
+  "authBasic": {
+    "message": "Basic Auth",
+    "description": "Basic authorization option"
+  },
+  "authBearerPlaceholder": {
+    "message": "Paste token here...",
+    "description": "Placeholder for bearer token input"
+  },
+  "authUsername": {
+    "message": "Username",
+    "description": "Username label for basic auth"
+  },
+  "authPassword": {
+    "message": "Password",
+    "description": "Password label for basic auth"
+  },
+  "authSyncHint": {
+    "message": "Automatically syncs to the Authorization request header.",
+    "description": "Hint explaining auth helper behavior"
+  },
+  "confirmResetAction": {
+    "message": "Confirm reset?",
+    "description": "Inline confirmation label for destructive reset action"
   }
 }

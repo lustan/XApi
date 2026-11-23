@@ -1,6 +1,4 @@
-
 import React from 'react';
-import { Button } from './Button';
 import { Logo } from './Logo';
 
 interface WelcomeScreenProps {
@@ -9,8 +7,11 @@ interface WelcomeScreenProps {
   onImportCurl: () => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onCreateRequest, onCreateCollection, onImportCurl }) => {
-  // 获取国际化文本
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
+  onCreateRequest,
+  onCreateCollection,
+  onImportCurl,
+}) => {
   const welcomeSubtitle = chrome.i18n.getMessage("welcomeSubtitle");
   const newRequestText = chrome.i18n.getMessage("newRequest");
   const newRequestDesc = chrome.i18n.getMessage("newRequestDesc");
@@ -18,64 +19,63 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onCreateRequest, o
   const newCollectionDesc = chrome.i18n.getMessage("newCollectionDesc");
   const importCurlText = chrome.i18n.getMessage("importCurl");
   const importCurlDesc = chrome.i18n.getMessage("importCurlDesc");
-  const runnerText = chrome.i18n.getMessage("runner");
-  const runnerDesc = chrome.i18n.getMessage("runnerDesc");
 
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-gray-50 p-8">
-      <div className="text-center max-w-2xl flex flex-col items-center">
-        <div className="mb-6 p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <Logo size={64} showText={false} />
+    <div className="h-full flex flex-col items-center justify-center bg-slate-50/70 p-8 overflow-y-auto">
+      <div className="text-center max-w-2xl w-full flex flex-col items-center">
+        <div className="mb-5">
+          <Logo size={56} showText={false} />
         </div>
-        
-        <h1 className="text-4xl font-black text-slate-800 mb-2 tracking-tighter">
-          X<span className="font-light text-slate-400">Api</span>
+
+        <h1 className="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">
+          X<span className="font-semibold text-emerald-600">Api</span>
         </h1>
-        <p className="text-slate-500 mb-10 text-lg font-medium">
+        <p className="text-slate-500 mb-9 text-sm max-w-md leading-relaxed">
           {welcomeSubtitle}
         </p>
 
-        <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
-          <div 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+          <button
+            type="button"
             onClick={onCreateRequest}
-            className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all hover:border-green-500 group text-left"
+            className="bg-white p-5 rounded-xl border border-slate-200 cursor-pointer hover:border-emerald-500 hover:shadow-sm transition-all group text-left flex flex-col items-start justify-start focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-            <div className="flex items-center justify-between mb-3">
-                <span className="font-bold text-gray-800">{newRequestText}</span>
-                <span className="text-green-600 text-xl group-hover:scale-110 transition-transform">⚡</span>
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3.5 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
             </div>
-            <p className="text-xs text-gray-500">{newRequestDesc}</p>
-          </div>
+            <div className="font-semibold text-sm text-slate-800 mb-1">{newRequestText}</div>
+            <p className="text-xs text-slate-500 leading-relaxed">{newRequestDesc}</p>
+          </button>
 
-          <div 
+          <button
+            type="button"
             onClick={onCreateCollection}
-            className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all hover:border-blue-500 group text-left"
+            className="bg-white p-5 rounded-xl border border-slate-200 cursor-pointer hover:border-emerald-500 hover:shadow-sm transition-all group text-left flex flex-col items-start justify-start focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-             <div className="flex items-center justify-between mb-3">
-                <span className="font-bold text-gray-800">{newCollectionText}</span>
-                <span className="text-blue-600 text-xl group-hover:scale-110 transition-transform">📁</span>
+            <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center mb-3.5 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
             </div>
-            <p className="text-xs text-gray-500">{newCollectionDesc}</p>
-          </div>
+            <div className="font-semibold text-sm text-slate-800 mb-1">{newCollectionText}</div>
+            <p className="text-xs text-slate-500 leading-relaxed">{newCollectionDesc}</p>
+          </button>
 
-          <div 
+          <button
+            type="button"
             onClick={onImportCurl}
-            className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all hover:border-purple-500 group text-left"
+            className="bg-white p-5 rounded-xl border border-slate-200 cursor-pointer hover:border-emerald-500 hover:shadow-sm transition-all group text-left flex flex-col items-start justify-start focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-             <div className="flex items-center justify-between mb-3">
-                <span className="font-bold text-gray-800">{importCurlText}</span>
-                <span className="text-purple-600 text-xl group-hover:scale-110 transition-transform">📥</span>
+            <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center mb-3.5 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
             </div>
-            <p className="text-xs text-gray-500">{importCurlDesc}</p>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 opacity-60 cursor-not-allowed text-left">
-             <div className="flex items-center justify-between mb-3">
-                <span className="font-bold text-gray-800">{runnerText}</span>
-                <span className="text-orange-600 text-xl">🏃</span>
-            </div>
-            <p className="text-xs text-gray-500">{runnerDesc}</p>
-          </div>
+            <div className="font-semibold text-sm text-slate-800 mb-1">{importCurlText}</div>
+            <p className="text-xs text-slate-500 leading-relaxed">{importCurlDesc}</p>
+          </button>
         </div>
       </div>
     </div>

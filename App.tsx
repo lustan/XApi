@@ -76,6 +76,14 @@ const App: React.FC = () => {
   const [isCurlModalOpen, setIsCurlModalOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [curlInput, setCurlInput] = useState('');
+  const [curlError, setCurlError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    confirmText?: string;
+    confirmVariant?: 'primary' | 'danger';
+    onConfirm: () => void;
+  } | null>(null);
   const [mockRules, setMockRules] = useState<MockRule[]>([]);
   const [mockGlobalEnabled, setMockGlobalEnabled] = useState(false);
   const [language, setLanguage] = useState<AppLanguage>('system');
@@ -218,16 +226,23 @@ const App: React.FC = () => {
   };
 
   const handleClearMockRules = () => {
-      if (!confirm(chrome.i18n.getMessage("clearMockRulesConfirm") || 'Clear all mock rules?')) return;
-      persistMockRules([]);
-      const nextTabs = tabs.filter(t => t.type !== 'mock');
-      if (nextTabs.length === 0) {
-          setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
-          setActiveTabId('welcome');
-      } else {
-          setTabs(nextTabs);
-          if (activeTab?.type === 'mock') setActiveTabId(nextTabs[nextTabs.length - 1].id);
-      }
+      setConfirmDialog({
+          title: chrome.i18n.getMessage("clear") || 'Clear',
+          message: chrome.i18n.getMessage("clearMockRulesConfirm") || 'Clear all mock rules?',
+          confirmVariant: 'danger',
+          onConfirm: () => {
+              persistMockRules([]);
+              const nextTabs = tabs.filter(t => t.type !== 'mock');
+              if (nextTabs.length === 0) {
+                  setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
+                  setActiveTabId('welcome');
+              } else {
+                  setTabs(nextTabs);
+                  if (activeTab?.type === 'mock') setActiveTabId(nextTabs[nextTabs.length - 1].id);
+              }
+              setConfirmDialog(null);
+          }
+      });
   };
 
   const handleDuplicateMockRule = (id: string) => {
@@ -517,23 +532,30 @@ const App: React.FC = () => {
         openRequestInTab(newReq);
         setIsCurlModalOpen(false);
         setCurlInput('');
+        setCurlError(null);
     } else { 
-        alert(chrome.i18n.getMessage("invalidCurl")); 
+        setCurlError(chrome.i18n.getMessage("invalidCurl") || 'Invalid cURL command');
     }
   };
 
   const handleClearAllData = () => {
-    if (confirm(chrome.i18n.getMessage("clearAllDataConfirm"))) {
-        initializedRef.current = false;
-        chrome.storage.local.clear(() => {
-            setCollections([]);
-            setHistory([]);
-            setRootRequests([]);
-            setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
-            setActiveTabId('welcome');
-            window.location.reload(); 
-        });
-    }
+    setConfirmDialog({
+        title: chrome.i18n.getMessage("resetWorkspace") || 'Reset Workspace',
+        message: chrome.i18n.getMessage("clearAllDataConfirm") || 'Reset all data?',
+        confirmVariant: 'danger',
+        onConfirm: () => {
+            initializedRef.current = false;
+            setConfirmDialog(null);
+            chrome.storage.local.clear(() => {
+                setCollections([]);
+                setHistory([]);
+                setRootRequests([]);
+                setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
+                setActiveTabId('welcome');
+                window.location.reload();
+            });
+        }
+    });
   };
 
   return (
@@ -581,23 +603,29 @@ const App: React.FC = () => {
           onRenameCollection={(id, name) => { const next = collections.map(c => c.id === id ? { ...c, name } : c); setCollections(next); chrome.storage.local.set({ collections: next }); }}
           onRenameRequest={handleRenameRequest}
           onDeleteCollection={(id) => {
-              if (confirm(chrome.i18n.getMessage("deleteCollectionConfirm"))) {
-                  const target = collections.find(c => c.id === id);
-                  const deletedIds = new Set((target?.requests || []).map(r => r.id));
-                  const next = collections.filter(c => c.id !== id);
-                  setCollections(next);
-                  chrome.storage.local.set({ collections: next });
-                  if (deletedIds.size > 0) {
-                      const nextTabs = tabs.filter(t => t.type !== 'request' || !deletedIds.has(t.id));
-                      if (nextTabs.length === 0) {
-                          setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
-                          setActiveTabId('welcome');
-                      } else {
-                          setTabs(nextTabs);
-                          if (!nextTabs.find(t => t.id === activeTabId)) setActiveTabId(nextTabs[nextTabs.length - 1].id);
+              setConfirmDialog({
+                  title: chrome.i18n.getMessage("delete") || 'Delete',
+                  message: chrome.i18n.getMessage("deleteCollectionConfirm") || 'Delete this collection?',
+                  confirmVariant: 'danger',
+                  onConfirm: () => {
+                      const target = collections.find(c => c.id === id);
+                      const deletedIds = new Set((target?.requests || []).map(r => r.id));
+                      const next = collections.filter(c => c.id !== id);
+                      setCollections(next);
+                      chrome.storage.local.set({ collections: next });
+                      if (deletedIds.size > 0) {
+                          const nextTabs = tabs.filter(t => t.type !== 'request' || !deletedIds.has(t.id));
+                          if (nextTabs.length === 0) {
+                              setTabs([{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }]);
+                              setActiveTabId('welcome');
+                          } else {
+                              setTabs(nextTabs);
+                              if (!nextTabs.find(t => t.id === activeTabId)) setActiveTabId(nextTabs[nextTabs.length - 1].id);
+                          }
                       }
+                      setConfirmDialog(null);
                   }
-              }
+              });
           }}
           onDeleteRequest={(req) => { const nextRoots = rootRequests.filter(r => r.id !== req.id); const nextCols = collections.map(c => ({ ...c, requests: c.requests.filter(r => r.id !== req.id) })); setRootRequests(nextRoots); setCollections(nextCols); chrome.storage.local.set({ rootRequests: nextRoots, collections: nextCols }); handleTabClose(req.id); }}
           onDuplicateRequest={(reqId) => {
@@ -635,42 +663,84 @@ const App: React.FC = () => {
         />
       )}
       <div key={languageVersion} className="flex-1 flex flex-col min-w-0 bg-white relative">
-         {isSidebarCollapsed && (
-             <button 
-                onClick={() => setIsSidebarCollapsed(false)}
-                className="absolute left-0 top-1.5 z-[60] p-1 bg-white border border-l-0 border-gray-200 rounded-r shadow-sm hover:bg-gray-50 transition-colors"
-                title={chrome.i18n.getMessage("expandSidebar")}
+         <TabBar
+           tabs={tabs}
+           activeTabId={activeTabId}
+           onTabClick={handleTabClick}
+           onTabClose={handleTabClose}
+           onTabReorder={(f, t) => { const next = [...tabs]; const [m] = next.splice(f, 1); next.splice(t, 0, m); setTabs(next); }}
+           onTabRename={handleTabRename}
+           onTabAction={(a, tid) => { const idx = tabs.findIndex(t => t.id === tid); let next: TabItem[] = []; switch (a) { case 'close-others': next = tabs.filter(t => t.id === tid); break; case 'close-right': next = tabs.filter((_, i) => i <= idx); break; case 'close-left': next = tabs.filter((_, i) => i >= idx); break; case 'close-all': next = []; break; } setTabs(next.length === 0 ? [{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }] : next); if (!next.find(t => t.id === activeTabId)) setActiveTabId(next[next.length - 1]?.id || 'welcome'); }}
+           collections={collections}
+           onSaveToCollection={handleSaveToCollection}
+           leftSlot={isSidebarCollapsed ? (
+             <button
+               type="button"
+               onClick={() => setIsSidebarCollapsed(false)}
+               className="p-1.5 rounded bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
+               title={chrome.i18n.getMessage("expandSidebar")}
+               aria-label={chrome.i18n.getMessage("expandSidebar")}
              >
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 5l7 7-7 7M5 5l7 7-7 7" strokeWidth={2}/></svg>
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 5l7 7-7 7M5 5l7 7-7 7" strokeWidth={2}/></svg>
              </button>
-         )}
-         <TabBar tabs={tabs} activeTabId={activeTabId} onTabClick={handleTabClick} onTabClose={handleTabClose} onTabReorder={(f, t) => { const next = [...tabs]; const [m] = next.splice(f, 1); next.splice(t, 0, m); setTabs(next); }} onTabRename={handleTabRename} onTabAction={(a, tid) => { const idx = tabs.findIndex(t => t.id === tid); let next: TabItem[] = []; switch (a) { case 'close-others': next = tabs.filter(t => t.id === tid); break; case 'close-right': next = tabs.filter((_, i) => i <= idx); break; case 'close-left': next = tabs.filter((_, i) => i >= idx); break; case 'close-all': next = []; break; } setTabs(next.length === 0 ? [{ id: 'welcome', type: 'welcome', title: chrome.i18n.getMessage("welcomeTabTitle") }] : next); if (!next.find(t => t.id === activeTabId)) setActiveTabId(next[next.length - 1]?.id || 'welcome'); }} collections={collections} onSaveToCollection={handleSaveToCollection} />
+           ) : undefined}
+         />
          <div className="flex-1 flex flex-col relative overflow-hidden">
             {activeTab?.type === 'mock' && activeMockRule ? (
                 <MockEditor
                     rule={activeMockRule}
                     history={history}
                     onRuleChange={handleUpdateMockRule}
+                    globalEnabled={mockGlobalEnabled}
+                    onToggleGlobal={handleToggleMockGlobal}
                 />
             ) : !activeRequest || activeTabId === 'welcome' ? (
-                <WelcomeScreen onCreateRequest={handleCreateRequest} onCreateCollection={handleCreateCollection} onImportCurl={() => setIsCurlModalOpen(true)} />
+                <WelcomeScreen onCreateRequest={handleCreateRequest} onCreateCollection={handleCreateCollection} onImportCurl={() => { setCurlError(null); setIsCurlModalOpen(true); }} />
             ) : (
                 <>
                     <RequestHeader request={activeRequest} onRequestChange={updateActiveRequest} onSend={handleSendRequest} isSending={activeIsLoading} />
                     <div className="flex-1 flex h-full overflow-hidden">
-                        <div className="w-1/2 min-w-[400px] h-full overflow-hidden border-r border-gray-100">
+                        <div className="w-1/2 min-w-[400px] h-full overflow-hidden border-r border-slate-200">
                             <RequestEditor request={activeRequest} onRequestChange={updateActiveRequest} />
                         </div>
                         <div className="w-1/2 min-w-[400px] h-full overflow-hidden">
-                            <ResponseViewer response={activeResponse} error={activeError} />
+                            <ResponseViewer response={activeResponse} error={activeError} isLoading={activeIsLoading} />
                         </div>
                     </div>
                 </>
             )}
          </div>
       </div>
-      <Modal isOpen={isCurlModalOpen} onClose={() => setIsCurlModalOpen(false)} title={chrome.i18n.getMessage("importCurlCommand")} onConfirm={handleImportCurlConfirm} confirmText={chrome.i18n.getMessage("import")} confirmDisabled={!curlInput.trim()}>
-          <textarea value={curlInput} onChange={(e) => setCurlInput(e.target.value)} className="w-full h-40 border border-gray-300 rounded p-3 font-mono text-xs focus:outline-none focus:border-green-500 bg-gray-50" placeholder="curl 'https://api.example.com' ..." />
+      <Modal
+        isOpen={isCurlModalOpen}
+        onClose={() => { setIsCurlModalOpen(false); setCurlError(null); }}
+        title={chrome.i18n.getMessage("importCurlCommand")}
+        onConfirm={handleImportCurlConfirm}
+        confirmText={chrome.i18n.getMessage("import")}
+        confirmDisabled={!curlInput.trim()}
+      >
+          <textarea
+            value={curlInput}
+            onChange={(e) => {
+              setCurlInput(e.target.value);
+              if (curlError) setCurlError(null);
+            }}
+            className={`w-full h-40 border rounded-md p-3 font-mono text-xs focus:outline-none bg-slate-50 focus:bg-white transition-colors ${curlError ? 'border-red-300 focus:border-red-500' : 'border-slate-300 focus:border-emerald-500'}`}
+            placeholder="curl 'https://api.example.com' ..."
+          />
+          {curlError && (
+            <div className="mt-2 text-xs text-red-600">{curlError}</div>
+          )}
+      </Modal>
+      <Modal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title || ''}
+        onConfirm={confirmDialog?.onConfirm}
+        confirmText={confirmDialog?.confirmText || chrome.i18n.getMessage("confirm")}
+        confirmVariant={confirmDialog?.confirmVariant || 'primary'}
+      >
+        <p className="text-sm text-slate-600 leading-relaxed">{confirmDialog?.message}</p>
       </Modal>
     </div>
   );

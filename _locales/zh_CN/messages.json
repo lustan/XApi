@@ -610,5 +610,73 @@
   "chineseSimplified": {
     "message": "简体中文",
     "description": "简体中文语言选项"
+  },
+  "copied": {
+    "message": "已复制",
+    "description": "复制成功提示"
+  },
+  "copyCurlTooltip": {
+    "message": "复制为 cURL",
+    "description": "复制为 cURL 按钮提示"
+  },
+  "sendingRequest": {
+    "message": "正在发送请求...",
+    "description": "请求发送中的加载提示"
+  },
+  "collectionsEmpty": {
+    "message": "暂无保存的请求",
+    "description": "集合标签页空状态标题"
+  },
+  "collectionsEmptyHint": {
+    "message": "你可以新建请求、创建集合分组，或直接导入 cURL 命令。",
+    "description": "集合标签页空状态说明"
+  },
+  "capturedEmptyHint": {
+    "message": "开启上方捕获开关后，在页面触发请求即可自动记录。",
+    "description": "捕获列表空状态提示"
+  },
+  "mockGlobalPausedBanner": {
+    "message": "全局挡板已暂停，当前规则暂不会生效。",
+    "description": "Mock 编辑器中全局开关关闭时的提示"
+  },
+  "enableNow": {
+    "message": "立即开启",
+    "description": "快速开启全局挡板按钮"
+  },
+  "authType": {
+    "message": "认证方式",
+    "description": "认证方式选择器标签"
+  },
+  "authNone": {
+    "message": "无认证",
+    "description": "无认证选项"
+  },
+  "authBearer": {
+    "message": "Bearer Token",
+    "description": "Bearer 令牌认证选项"
+  },
+  "authBasic": {
+    "message": "Basic Auth",
+    "description": "Basic 基础认证选项"
+  },
+  "authBearerPlaceholder": {
+    "message": "粘贴 Token...",
+    "description": "Bearer Token 输入框占位符"
+  },
+  "authUsername": {
+    "message": "用户名",
+    "description": "Basic 认证用户名标签"
+  },
+  "authPassword": {
+    "message": "密码",
+    "description": "Basic 认证密码标签"
+  },
+  "authSyncHint": {
+    "message": "填写后将自动同步生成 Authorization 请求头。",
+    "description": "认证辅助说明文案"
+  },
+  "confirmResetAction": {
+    "message": "确认重置全部数据？",
+    "description": "重置工作区的二次确认文案"
   }
 }
