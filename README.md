@@ -3,7 +3,7 @@
 A high-performance, open-source Chrome extension (Manifest V3) that brings a Postman-like workflow directly into your browser's DevTools. XApi intercepts, debugs, edits, and replays HTTP requests — with first-class support for modifying sensitive headers such as `Cookie`, `Origin`, and `Referer`, mocking responses, and injecting request headers globally.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-3.1.5-green)
+![Version](https://img.shields.io/badge/version-3.1.8-green)
 ![Manifest](https://img.shields.io/badge/Manifest-V3-orange)
 
 ## Overview
@@ -21,12 +21,12 @@ https://github.com/user-attachments/assets/490f58f6-b000-49de-80e1-702669052b55
 - Organize requests into nested collections with persistent storage.
 
 ### Modify Header (global request headers)
-Inject or override request headers across every XHR/Fetch call, without editing individual requests.
+Inject or override request headers across all network requests, without editing individual requests.
 
 - Managed from the **Header** tab in the extension popup, backed by Chrome's `declarativeNetRequest` (DNR) engine.
 - Each header row has an enable checkbox, a key, and a value; toggle rows individually and flip the global master switch to activate all enabled headers at once.
 - Headers are applied as `SET` operations, so they add the header when absent and override it when present.
-- Scope is limited to `XMLHttpRequest` resources, matching XApi's capture range, and the rule is rebuilt automatically whenever you change a header or toggle the switch.
+- The rule applies to every resource type covered by the extension's host permissions, including navigations, API calls, and static assets, and is rebuilt automatically whenever you change a header or toggle the switch.
 - Because it runs through DNR, it can set headers the browser normally protects — including `Cookie`, `Origin`, and `Referer` — that page scripts cannot change on their own.
 - Global header rules use a dedicated DNR rule and a lower priority than one-off replay rules, so replaying a single request can still override a global header of the same name for that call.
 
@@ -82,7 +82,7 @@ XApi is available on the Chrome Web Store. Search for **XApi** or use the link b
 
 1. Open the extension popup and switch to the **Header** tab.
 2. Add a header with **+ Add Header**, fill in the key and value, and tick its checkbox to enable it.
-3. Turn on the global header switch. Every XHR/Fetch request from then on carries the enabled headers.
+3. Turn on the global header switch. Every network request from then on carries the enabled headers.
 4. Disable a single row or flip the global switch off to stop injection at any time.
 
 #### Mocking a response

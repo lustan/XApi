@@ -4,7 +4,7 @@
     "description": "Extension name displayed in Chrome Web Store and extension management page"
   },
   "extDescription": {
-    "message": "Intercept, debug & replay HTTP requests. A comprehensive API client with collections and cURL support inside Chrome DevTools.",
+    "message": "Intercept, debug, modify header & response, replay HTTP requests. Comprehensive API client & cURL support in Chrome DevTools.",
     "description": "Extension description"
   },
   "welcomeTitle": {
@@ -424,7 +424,7 @@
     "description": "Label when global header switch is off"
   },
   "globalHeaderHint": {
-    "message": "When enabled, every XHR/Fetch request will carry the enabled headers.",
+    "message": "When enabled, every network request will carry the enabled headers.",
     "description": "Hint text on the Header tab"
   },
   "addHeader": {

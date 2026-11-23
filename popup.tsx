@@ -65,6 +65,7 @@ const Popup = () => {
   const [mockRules, setMockRules] = useState<MockRule[]>([]);
   const [globalHeaders, setGlobalHeaders] = useState<GlobalHeader[]>([]);
   const [globalHeadersEnabled, setGlobalHeadersEnabled] = useState(false);
+  const [headersLoaded, setHeadersLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [languageVersion, setLanguageVersion] = useState(0);
   const [language, setLanguage] = useState<AppLanguage>('system');
@@ -118,6 +119,7 @@ const Popup = () => {
           setMockRules(result[MOCK_RULES_KEY] || []);
           setGlobalHeaders(result[GLOBAL_HEADERS_KEY] || []);
           setGlobalHeadersEnabled(result[GLOBAL_HEADERS_ENABLED_KEY] === true);
+          setHeadersLoaded(true);
         });
 
       const listener = (changes: any) => {
@@ -231,8 +233,16 @@ const Popup = () => {
   };
 
   const removeHeader = (id: string) => {
-    persistHeaders(globalHeaders.filter(h => h.id !== id));
+    const next = globalHeaders.filter(h => h.id !== id);
+    persistHeaders(next.length ? next : [{ id: generateId(), key: '', value: '', enabled: true }]);
   };
+
+  // Wait for stored headers before creating an editable row in an empty list.
+  useEffect(() => {
+    if (headersLoaded && activeTab === 'header' && globalHeaders.length === 0) {
+      persistHeaders([{ id: generateId(), key: '', value: '', enabled: true }]);
+    }
+  }, [headersLoaded, activeTab, globalHeaders.length]);
 
   const validLogs = logs.filter(log => {
     if (!log || !log.url || log.url.startsWith('chrome-extension')) return false;
@@ -602,7 +612,7 @@ const Popup = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-[11px] text-slate-600 leading-snug block">
-              {chrome.i18n.getMessage("globalHeaderHint") || 'When enabled, every XHR/Fetch request will carry the enabled headers.'}
+              {chrome.i18n.getMessage("globalHeaderHint") || 'When enabled, every network request will carry the enabled headers.'}
             </span>
           </div>
 

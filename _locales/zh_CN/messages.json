@@ -4,7 +4,7 @@
     "description": "在 Chrome 网上应用店和扩展管理页面显示的扩展名称"
   },
   "extDescription": {
-    "message": "拦截、调试和重放 HTTP 请求。一个全面的 API 客户端，支持集合和 cURL，内置于 Chrome 开发者工具中。",
+    "message": "拦截、调试、修改请求头与响应、重放请求。全面的 API 客户端，支持 cURL，内置于 Chrome 开发者工具。",
     "description": "扩展描述"
   },
   "welcomeTitle": {
@@ -424,7 +424,7 @@
     "description": "全局请求头开关关闭时的提示"
   },
   "globalHeaderHint": {
-    "message": "开启后，所有 XHR/Fetch 请求都会带上已启用的请求头。",
+    "message": "开启后，所有网络请求都会带上已启用的请求头。",
     "description": "请求头标签页的提示文案"
   },
   "addHeader": {

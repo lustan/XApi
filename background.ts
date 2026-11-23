@@ -6,7 +6,7 @@ const EXTENSION_ID = chrome.runtime.id;
 
 // Rule IDs for declarativeNetRequest session rules.
 //  1 = dashboard replay header override (single URL, high priority)
-//  2 = global headers injected into every XHR/Fetch request (Header tab)
+//  2 = global headers injected into every network request (Header tab)
 const REPLAY_HEADER_RULE_ID = 1;
 const GLOBAL_HEADER_RULE_ID = 2;
 const GLOBAL_HEADERS_KEY = 'globalHeaders';
@@ -65,7 +65,7 @@ chrome.storage.onChanged.addListener((changes) => {
 
 // --- Global Header DNR Rule ---
 // Reads globalHeadersEnabled + globalHeaders from storage and maintains a
-// single session rule (id=2) that SETs each enabled header on every XHR/Fetch
+// single session rule (id=2) that SETs each enabled header on every network
 // request. Removes the rule when disabled or when no enabled headers exist.
 const applyGlobalHeaderRule = () => {
     chrome.storage.local.get([GLOBAL_HEADERS_KEY, GLOBAL_HEADERS_ENABLED_KEY], (result) => {
@@ -97,17 +97,20 @@ const applyGlobalHeaderRule = () => {
                 requestHeaders
             },
             condition: {
-                // XHR/Fetch only — leaves page navigation & static assets alone.
-                resourceTypes: [
-                    chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST
-                ]
+                // DNR excludes main_frame when resourceTypes is omitted, so
+                // enumerate every type explicitly to include page navigation.
+                resourceTypes: Object.values(
+                    chrome.declarativeNetRequest.ResourceType
+                )
             }
         };
 
         chrome.declarativeNetRequest.updateSessionRules({
             removeRuleIds: [GLOBAL_HEADER_RULE_ID],
             addRules: [rule as any]
-        }).catch(() => { /* noop */ });
+        }).catch(error => {
+            console.error('Failed to apply global header rule:', error);
+        });
     });
 };
 
