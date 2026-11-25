@@ -3,7 +3,7 @@
 A high-performance, open-source Chrome extension (Manifest V3) that brings a Postman-like workflow directly into your browser's DevTools. XApi intercepts, debugs, edits, and replays HTTP requests — with first-class support for modifying sensitive headers such as `Cookie`, `Origin`, and `Referer`, mocking responses, and injecting request headers globally.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-3.1.8-green)
+![Version](https://img.shields.io/badge/version-3.2.0-green)
 ![Manifest](https://img.shields.io/badge/Manifest-V3-orange)
 
 ## Overview

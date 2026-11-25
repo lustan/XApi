@@ -1,16 +1,13 @@
 {
   "manifest_version": 3,
   "name": "XApi HTTP Client - API Tool, Modify Header & Response",
-  "version": "3.1.8",
+  "version": "3.2.0",
   "description": "Intercept, debug, modify header & response, replay HTTP requests. Comprehensive API client & cURL support in Chrome DevTools.",
   "default_locale": "en",
   "permissions": [
     "storage",
-    "contextMenus",
     "webRequest",
-    "declarativeNetRequest",
-    "declarativeNetRequestFeedback",
-    "scripting"
+    "declarativeNetRequest"
   ],
   "host_permissions": ["<all_urls>"],
   "icons": {
@@ -56,6 +53,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }

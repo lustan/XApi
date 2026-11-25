@@ -28,14 +28,14 @@ export const buildWorkspaceExport = (data: {
   environments: EnvironmentItem[];
   headerProfiles?: HeaderProfile[];
 }): XApiWorkspacePayload => ({
-  xapiVersion: '3.1.8',
+  xapiVersion: '3.2.0',
   exportedAt: Date.now(),
   kind: 'workspace',
   ...data,
 });
 
 export const buildMockRulesExport = (mockRules: MockRule[]): XApiWorkspacePayload => ({
-  xapiVersion: '3.1.8',
+  xapiVersion: '3.2.0',
   exportedAt: Date.now(),
   kind: 'mock-rules',
   mockRules,
