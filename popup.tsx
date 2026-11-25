@@ -123,6 +123,13 @@ const Popup = () => {
   const hostFilterPh = chrome.i18n.getMessage("hostFilterPlaceholder") || 'Filter URL (e.g. localhost)';
   const defaultProfileName = chrome.i18n.getMessage("headerProfileDefault") || 'Default';
   const newProfileText = chrome.i18n.getMessage("newProfile") || 'New Profile';
+  const confirmText = chrome.i18n.getMessage("confirm") || 'Confirm';
+  const headerProfileText = chrome.i18n.getMessage("headerProfile") || 'Header Profile';
+  const setHeaderOpTitle = chrome.i18n.getMessage("setHeaderOpTitle") || 'Set header value';
+  const removeHeaderOpTitle = chrome.i18n.getMessage("removeHeaderOpTitle") || 'Remove matching header';
+  const removeHeaderTag = chrome.i18n.getMessage("removeHeaderTag") || '(remove)';
+  const mockFallbackText = chrome.i18n.getMessage("mockFallback") || 'Mock';
+  const toggleMockRuleText = chrome.i18n.getMessage("toggleMockRule") || 'Toggle mock rule';
 
   useEffect(() => {
     try {
@@ -328,7 +335,7 @@ const Popup = () => {
   };
 
   const handleConfirmNewProfile = () => {
-    const trimmed = newProfileName.trim() || `Profile ${headerProfiles.length + 1}`;
+    const trimmed = newProfileName.trim() || chrome.i18n.getMessage("headerProfileDefaultPrefix", [String(headerProfiles.length + 1)]) || `Profile ${headerProfiles.length + 1}`;
     const created: HeaderProfile = {
       id: generateId(),
       name: trimmed,
@@ -455,7 +462,9 @@ const Popup = () => {
           {isSettingsOpen && (
             <div className="absolute right-0 top-full mt-1.5 w-52 bg-white border border-slate-200 shadow-xl rounded-lg z-[110] py-1 animate-fadeIn overflow-hidden text-slate-700">
               <div className="px-3.5 py-2 border-b border-slate-100 bg-slate-50/70">
-                <span className="text-[11px] font-semibold text-slate-400">Version {APP_CONFIG.VERSION}</span>
+                <span className="text-[11px] font-semibold text-slate-400">
+                  {chrome.i18n.getMessage("versionLabel", [APP_CONFIG.VERSION]) || `Version ${APP_CONFIG.VERSION}`}
+                </span>
               </div>
               <a
                 href={APP_CONFIG.GITHUB_URL}
@@ -744,7 +753,7 @@ const Popup = () => {
                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${getMethodBadgeColor(rule.method === 'ANY' ? '' : rule.method)}`}>
                           {rule.method}
                         </span>
-                        <span className="text-xs font-semibold text-slate-700 truncate">{rule.name || rule.urlPattern || 'Mock'}</span>
+                        <span className="text-xs font-semibold text-slate-700 truncate">{rule.name || rule.urlPattern || mockFallbackText}</span>
                         {typeof rule.delayMs === 'number' && rule.delayMs > 0 && (
                           <span className="text-[9px] font-mono text-amber-700 bg-amber-50 px-1 rounded tabular-nums">{rule.delayMs}ms</span>
                         )}
@@ -761,7 +770,7 @@ const Popup = () => {
                         size="sm"
                         on={rule.enabled}
                         onClick={() => toggleMockRule(rule.id)}
-                        ariaLabel={rule.name || rule.urlPattern || 'Mock rule'}
+                        ariaLabel={rule.name || rule.urlPattern || toggleMockRuleText}
                       />
                     </div>
                   </li>
@@ -818,13 +827,14 @@ const Popup = () => {
                   <button
                     type="button"
                     onClick={handleConfirmNewProfile}
-                    className="px-2 py-1 text-[11px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                    className="px-2 py-1 text-[11px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700 whitespace-nowrap"
                   >
-                    OK
+                    {confirmText}
                   </button>
                   <button
                     type="button"
                     onClick={() => { setIsCreatingProfile(false); setNewProfileName(''); }}
+                    aria-label={chrome.i18n.getMessage("cancel") || 'Cancel'}
                     className="px-1.5 py-1 text-[11px] text-slate-500 hover:text-slate-700"
                   >
                     ✕
@@ -833,13 +843,17 @@ const Popup = () => {
               ) : (
                 <>
                   <select
-                    aria-label="Header Profile"
+                    aria-label={headerProfileText}
                     value={activeProfileId || 'default'}
                     onChange={(e) => handleSelectProfile(e.target.value)}
                     className="flex-1 min-w-0 text-xs border border-slate-200 rounded-md px-2 py-1 bg-slate-50 focus:bg-white text-slate-700 focus:outline-none focus:border-emerald-500"
                   >
                     {headerProfiles.map(p => (
-                      <option key={p.id} value={p.id}>{p.name || defaultProfileName}</option>
+                      <option key={p.id} value={p.id}>
+                        {p.id === 'default' && (!p.name || p.name === 'Default' || p.name === '默认方案')
+                          ? defaultProfileName
+                          : p.name}
+                      </option>
                     ))}
                   </select>
                   <button
@@ -933,7 +947,8 @@ const Popup = () => {
                         <button
                           type="button"
                           onClick={() => updateHeader(h.id, { operation: isRemove ? 'set' : 'remove' })}
-                          title={isRemove ? 'Remove matching header' : 'Set header value'}
+                          title={isRemove ? removeHeaderOpTitle : setHeaderOpTitle}
+                          aria-label={isRemove ? removeHeaderOpTitle : setHeaderOpTitle}
                           className={`px-1 py-1 rounded text-[9px] font-bold font-mono flex-shrink-0 border ${
                             isRemove
                               ? 'bg-red-50 text-red-600 border-red-200'
@@ -951,7 +966,7 @@ const Popup = () => {
                         />
                         {isRemove ? (
                           <span className="flex-1 min-w-0 text-[10px] text-red-500 italic px-1.5 truncate font-mono">
-                            (remove)
+                            {removeHeaderTag}
                           </span>
                         ) : (
                           <input

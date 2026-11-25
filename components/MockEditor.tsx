@@ -71,13 +71,13 @@ const serializeValue = (type: ValueType, display: string): string => {
   return `${RAW_PREFIX}${display}`;
 };
 
-const TYPE_OPTIONS: { value: ValueType; label: string }[] = [
-  { value: 'string', label: 'String' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Boolean' },
-  { value: 'array', label: 'Array' },
-  { value: 'object', label: 'Object' },
-  { value: 'null', label: 'Null' },
+const getTypeOptions = (): { value: ValueType; label: string }[] => [
+  { value: 'string', label: t('mockTypeString', 'String') },
+  { value: 'number', label: t('mockTypeNumber', 'Number') },
+  { value: 'boolean', label: t('mockTypeBoolean', 'Boolean') },
+  { value: 'array', label: t('mockTypeArray', 'Array') },
+  { value: 'object', label: t('mockTypeObject', 'Object') },
+  { value: 'null', label: t('mockTypeNull', 'Null') },
 ];
 
 const PLACEHOLDERS: Record<ValueType, string> = {
@@ -152,10 +152,11 @@ const ValueCell: React.FC<ValueCellProps> = ({ storedValue, onChange }) => {
       <select
         value={type}
         onChange={e => changeType(e.target.value as ValueType)}
-        title="Value type"
+        title={t('mockValueTypeTitle', 'Value type')}
+        aria-label={t('mockValueTypeTitle', 'Value type')}
         className="text-[10px] font-semibold text-slate-500 border border-slate-200 hover:border-slate-300 focus:border-emerald-500 rounded px-1 py-1 bg-white focus:outline-none transition-colors"
       >
-        {TYPE_OPTIONS.map(o => (
+        {getTypeOptions().map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
@@ -344,7 +345,7 @@ export const MockEditor: React.FC<MockEditorProps> = ({
               <button
                 type="button"
                 onClick={() => handleDeleteScenario(s.id)}
-                aria-label={`Delete scenario ${s.name}`}
+                aria-label={`${t('mockDeleteScenario', 'Delete scenario')} ${s.name}`}
                 className="pr-1.5 pl-0.5 py-1 text-slate-400 hover:text-red-500"
               >
                 ×
@@ -478,7 +479,7 @@ export const MockEditor: React.FC<MockEditorProps> = ({
                     type="text"
                     value={rule.queryMatch || ''}
                     onChange={(e) => update({ queryMatch: e.target.value })}
-                    placeholder="e.g. role=admin"
+                    placeholder={t('queryMatchPlaceholder', 'e.g. role=admin')}
                     className="w-full text-xs font-mono bg-white border border-slate-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
@@ -488,7 +489,7 @@ export const MockEditor: React.FC<MockEditorProps> = ({
                     type="text"
                     value={rule.bodyMatch || ''}
                     onChange={(e) => update({ bodyMatch: e.target.value })}
-                    placeholder="e.g. GetUserProfile"
+                    placeholder={t('bodyMatchPlaceholder', 'e.g. GetUserProfile')}
                     className="w-full text-xs font-mono bg-white border border-slate-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
@@ -720,7 +721,7 @@ export const MockEditor: React.FC<MockEditorProps> = ({
                         type="button"
                         onClick={() => removePatch(p.id)}
                         className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                        aria-label="Remove field"
+                        aria-label={t('mockRemoveField', 'Remove field')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>

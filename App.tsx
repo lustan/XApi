@@ -359,7 +359,7 @@ const App: React.FC = () => {
   const openMockRuleInTab = (rule: MockRule) => {
     setTabs((prev) => {
       if (prev.some((t) => t.id === rule.id)) return prev;
-      const newTab: TabItem = { id: rule.id, type: 'mock', title: rule.name || 'Mock', mockData: rule };
+      const newTab: TabItem = { id: rule.id, type: 'mock', title: rule.name || chrome.i18n.getMessage('mockFallback') || 'Mock', mockData: rule };
       return prev[0]?.type === 'welcome' ? [newTab] : [...prev, newTab];
     });
     setActiveTabId(rule.id);
@@ -367,12 +367,13 @@ const App: React.FC = () => {
 
   const handleCompareLogs = (left: LoggedRequest, right: LoggedRequest) => {
     const diffId = `diff:${left.id}:${right.id}`;
+    const diffPrefix = chrome.i18n.getMessage('diffTabPrefix') || 'Diff';
     setTabs((prev) => {
       if (prev.some((t) => t.id === diffId)) return prev;
       const diffTab: TabItem = {
         id: diffId,
         type: 'diff',
-        title: `Diff: ${left.method} vs ${right.method}`,
+        title: `${diffPrefix}: ${left.method} vs ${right.method}`,
         diffData: { left, right },
       };
       return prev[0]?.type === 'welcome' ? [diffTab] : [...prev, diffTab];
@@ -416,7 +417,7 @@ const App: React.FC = () => {
     const next = mockRules.map((r) => (r.id === updated.id ? updated : r));
     persistMockRules(next);
     setTabs((prev) =>
-      prev.map((t) => (t.id === updated.id ? { ...t, title: updated.name || 'Mock', mockData: updated } : t))
+      prev.map((t) => (t.id === updated.id ? { ...t, title: updated.name || chrome.i18n.getMessage('mockFallback') || 'Mock', mockData: updated } : t))
     );
   };
 
@@ -455,10 +456,11 @@ const App: React.FC = () => {
   const handleDuplicateMockRule = (id: string) => {
     const found = mockRules.find((r) => r.id === id);
     if (!found) return;
+    const copySuffix = chrome.i18n.getMessage('copySuffix') || 'Copy';
     const copy: MockRule = {
       ...found,
       id: generateId(),
-      name: `${found.name} Copy`,
+      name: `${found.name} ${copySuffix}`,
       hitCount: 0,
       createdAt: Date.now(),
     };
@@ -590,7 +592,7 @@ const App: React.FC = () => {
     }));
     const newCol: CollectionItem = {
       id: colId,
-      name: `Captured (${requests.length})`,
+      name: chrome.i18n.getMessage('capturedCollectionName', [String(requests.length)]) || `Captured (${requests.length})`,
       collapsed: false,
       requests,
     };
@@ -1084,7 +1086,8 @@ const App: React.FC = () => {
           onDuplicateRequest={(reqId) => {
             const found = allSavedRequests.find((r) => r.id === reqId);
             if (found) {
-              const newReq = { ...found, id: generateId(), name: `${found.name} Copy` };
+              const copySuffix = chrome.i18n.getMessage('copySuffix') || 'Copy';
+              const newReq = { ...found, id: generateId(), name: `${found.name} ${copySuffix}` };
               if (newReq.collectionId) {
                 const nextCols = insertRequestIntoCollection(collections, newReq.collectionId, newReq);
                 setCollections(nextCols);
@@ -1187,8 +1190,8 @@ const App: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCommandPaletteOpen(true)}
-                title="Command Palette (Cmd/Ctrl + K)"
-                aria-label="Open Command Palette"
+                title={chrome.i18n.getMessage('openCommandPalette') || 'Open Command Palette (Cmd/Ctrl + K)'}
+                aria-label={chrome.i18n.getMessage('commandPaletteTitle') || 'Open Command Palette'}
                 className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-slate-500 bg-white border border-slate-200 rounded-md hover:text-slate-800 hover:bg-slate-50 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1214,7 +1217,7 @@ const App: React.FC = () => {
                   onChange={(e) => handleSwitchActiveEnv(e.target.value || null)}
                   className="text-[11px] font-medium text-slate-700 bg-transparent pl-2 pr-1.5 py-1 focus:outline-none max-w-[130px] cursor-pointer"
                 >
-                  <option value="">{chrome.i18n.getMessage('noEnv') || 'No Env'}</option>
+                  <option value="">{chrome.i18n.getMessage('noEnvSelected') || 'No Environment'}</option>
                   {environments.map((env) => (
                     <option key={env.id} value={env.id}>
                       {env.name}

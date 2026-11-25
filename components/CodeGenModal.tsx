@@ -46,14 +46,17 @@ export const CodeGenModal: React.FC<CodeGenModalProps> = ({
       try {
         sections.push(`// Response Body\n${jsonToTypeScript(response.body, 'ApiResponse')}`);
       } catch {
-        sections.push('// Response body is not valid JSON.');
+        sections.push(chrome.i18n.getMessage('codeGenInvalidJson') || '// Response body is not valid JSON.');
       }
     }
     if (sections.length === 0) {
-      return '// Send a request with a JSON body/response (or add raw JSON body) to infer TypeScript types.';
+      return (
+        chrome.i18n.getMessage('codeGenTsHint') ||
+        '// Send a request with a JSON body/response (or add raw JSON body) to infer TypeScript types.'
+      );
     }
     return sections.join('\n\n');
-  }, [tab, request, response]);
+  }, [isOpen, tab, request, response]);
 
   if (!isOpen) return null;
 
@@ -136,7 +139,7 @@ export const CodeGenModal: React.FC<CodeGenModalProps> = ({
                 : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            {copied ? (chrome.i18n.getMessage('copied') || 'Copied') : 'Copy Code'}
+            {copied ? (chrome.i18n.getMessage('copied') || 'Copied') : (chrome.i18n.getMessage('copyCode') || 'Copy Code')}
           </button>
         </div>
 

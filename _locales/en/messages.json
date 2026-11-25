@@ -487,10 +487,6 @@
     "message": "Enabled",
     "description": "Toggle label to enable/disable a single mock rule"
   },
-  "mockRuleNamePlaceholder": {
-    "message": "Friendly rule name",
-    "description": "Placeholder for the rule name input"
-  },
   "mockMatchSection": {
     "message": "Match",
     "description": "Section title for matching configuration"
@@ -730,5 +726,152 @@
   "sseStreamTab": { "message": "Event Stream" },
   "findInResponse": { "message": "Find in response..." },
   "commandPaletteTitle": { "message": "Quick Search & Commands" },
-  "commandPalettePlaceholder": { "message": "Search requests, captured logs, mocks, or commands..." }
+  "commandPalettePlaceholder": { "message": "Search requests, captured logs, mocks, or commands..." },
+  "newFolder": { "message": "New Folder" },
+  "activeEnvironment": { "message": "Environment" },
+  "export": { "message": "Export" },
+  "headerProfile": { "message": "Header Profile" },
+  "headerProfileDefaultPrefix": {
+    "message": "Profile $NUM$",
+    "placeholders": {
+      "num": { "content": "$1" }
+    }
+  },
+  "setHeaderOpTitle": { "message": "Set header value" },
+  "removeHeaderOpTitle": { "message": "Remove matching header" },
+  "removeHeaderTag": { "message": "(remove)" },
+  "resolvedUrlLabel": { "message": "Resolved" },
+  "httpMethodLabel": { "message": "HTTP Method" },
+  "diffTabPrefix": { "message": "Diff" },
+  "capturedCollectionName": {
+    "message": "Captured ($COUNT$)",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "openCommandPalette": { "message": "Open Command Palette (Cmd/Ctrl + K)" },
+  "toggleMockRule": { "message": "Toggle mock rule" },
+  "mockEnableRule": { "message": "Enable" },
+  "mockDisableRule": { "message": "Disable" },
+  "mockModeReplaceShort": { "message": "replace" },
+  "mockModePatchShort": { "message": "patch" },
+  "mockValueTypeTitle": { "message": "Value type" },
+  "mockTypeString": { "message": "String" },
+  "mockTypeNumber": { "message": "Number" },
+  "mockTypeBoolean": { "message": "Boolean" },
+  "mockTypeArray": { "message": "Array" },
+  "mockTypeObject": { "message": "Object" },
+  "mockTypeNull": { "message": "Null" },
+  "mockRemoveField": { "message": "Remove field" },
+  "mockDeleteScenario": { "message": "Delete scenario" },
+  "queryMatchPlaceholder": { "message": "e.g. role=admin" },
+  "bodyMatchPlaceholder": { "message": "e.g. GetUserProfile" },
+  "authStatusAppliedHeader": {
+    "message": "Applied $HEADER$ header from $SOURCE$",
+    "placeholders": {
+      "header": { "content": "$1" },
+      "source": { "content": "$2" }
+    }
+  },
+  "authStatusNoHeaderInCaptured": { "message": "No Authorization or Cookie header found in captured requests." },
+  "authStatusExtensionOnly": { "message": "Page storage reading is available when running inside Chrome Extension." },
+  "authStatusNoActiveTab": { "message": "No active browser tab found." },
+  "authStatusReloadPage": { "message": "Reload the target page or ensure it is a standard web page." },
+  "authStatusNoStorageToken": { "message": "No token key found in active tab localStorage/sessionStorage." },
+  "authStatusLoadedToken": {
+    "message": "Loaded Bearer token from storage key \"$KEY$\".",
+    "placeholders": {
+      "key": { "content": "$1" }
+    }
+  },
+  "authStatusStorageInspectFailed": { "message": "Unable to inspect active browser tab storage." },
+  "extractTargetEnv": {
+    "message": "Target: $NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "extractNoActiveEnv": { "message": "No Active Environment" },
+  "extractSource": { "message": "Source" },
+  "extractPathHeader": { "message": "Path / Header" },
+  "extractTargetVar": { "message": "Variable" },
+  "extractSourceBody": { "message": "JSON Body" },
+  "extractSourceHeader": { "message": "Header" },
+  "extractRemoveRule": { "message": "Remove extract rule" },
+  "extractNoRules": { "message": "No extract rules configured." },
+  "sseWaiting": { "message": "Waiting for server-sent events..." },
+  "sseNoEvents": { "message": "No events received." },
+  "noMatchingLinesFound": { "message": "No matching lines found." },
+  "envDefaultPrefix": { "message": "Env" },
+  "environmentsHintPrefix": { "message": "Use" },
+  "environmentsHintSuffix": { "message": "inside URLs, Headers, Params, and Body." },
+  "noEnvironmentsYet": { "message": "No environments yet." },
+  "environmentNameLabel": { "message": "Environment name" },
+  "envActive": { "message": "Active" },
+  "envSetActive": { "message": "Set Active" },
+  "environmentsEmptyDesc": { "message": "Create an environment to store reusable URLs, tokens, and IDs." },
+  "cmdGroupActions": { "message": "Actions" },
+  "cmdGroupEnvs": { "message": "Environments" },
+  "cmdGroupRequests": { "message": "Saved Requests" },
+  "cmdGroupMocks": { "message": "Mock Rules" },
+  "cmdGroupCaptured": { "message": "Captured" },
+  "switchEnvironmentLabel": {
+    "message": "Switch Environment: $NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "variablesCountLabel": {
+    "message": "$COUNT$ variables",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "noMatchingItemsFound": { "message": "No matching items found." },
+  "diffBaseline": { "message": "Baseline (A)" },
+  "diffCompare": { "message": "Compare (B)" },
+  "diffNoRespBody": { "message": "(No captured response body)" },
+  "diffEmptyReqBody": { "message": "(Empty request body)" },
+  "diffResponseBody": { "message": "Response Body" },
+  "diffRequestBody": { "message": "Request Body" },
+  "diffRequestHeaders": { "message": "Request Headers" },
+  "copyCode": { "message": "Copy Code" },
+  "codeGenInvalidJson": { "message": "// Response body is not valid JSON." },
+  "codeGenTsHint": { "message": "// Send a request with a JSON body/response (or add raw JSON body) to infer TypeScript types." },
+  "importInvalidError": { "message": "Please paste a valid cURL command, Postman v2.1, OpenAPI / Swagger JSON, or XApi backup JSON." },
+  "selectedCountLabel": {
+    "message": "$COUNT$ selected",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "selectItemLabel": {
+    "message": "Select $ITEM$",
+    "placeholders": {
+      "item": { "content": "$1" }
+    }
+  },
+  "versionLabel": {
+    "message": "Version $VER$",
+    "placeholders": {
+      "ver": { "content": "$1" }
+    }
+  },
+  "copySuffix": { "message": "Copy" },
+  "requestFallback": { "message": "Request" },
+  "mockFallback": { "message": "Mock" },
+  "jsonItemsSummary": {
+    "message": "$COUNT$ items",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "jsonItemSingleSummary": { "message": "1 item" },
+  "jsonKeysSummary": {
+    "message": "$COUNT$ keys",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "jsonKeySingleSummary": { "message": "1 key" }
 }

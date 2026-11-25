@@ -13,24 +13,32 @@ type DiffSection = 'response' | 'request' | 'headers';
 export const DiffViewer: React.FC<DiffViewerProps> = ({ left, right }) => {
   const [section, setSection] = useState<DiffSection>('response');
 
+  const noRespBodyText = chrome.i18n.getMessage('diffNoRespBody') || '(No captured response body)';
+  const emptyReqBodyText = chrome.i18n.getMessage('diffEmptyReqBody') || '(Empty request body)';
+  const baselineLabel = chrome.i18n.getMessage('diffBaseline') || 'Baseline (A)';
+  const compareLabel = chrome.i18n.getMessage('diffCompare') || 'Compare (B)';
+  const respBodyLabel = chrome.i18n.getMessage('diffResponseBody') || 'Response Body';
+  const reqBodyLabel = chrome.i18n.getMessage('diffRequestBody') || 'Request Body';
+  const reqHeadersLabel = chrome.i18n.getMessage('diffRequestHeaders') || 'Request Headers';
+
   const diffLines = useMemo(() => {
     if (section === 'response') {
       return computeLineDiff(
-        prettyJsonOrRaw(left.responseBody || '(No captured response body)'),
-        prettyJsonOrRaw(right.responseBody || '(No captured response body)')
+        prettyJsonOrRaw(left.responseBody || noRespBodyText),
+        prettyJsonOrRaw(right.responseBody || noRespBodyText)
       );
     }
     if (section === 'request') {
       return computeLineDiff(
-        prettyJsonOrRaw(left.requestBody || '(Empty request body)'),
-        prettyJsonOrRaw(right.requestBody || '(Empty request body)')
+        prettyJsonOrRaw(left.requestBody || emptyReqBodyText),
+        prettyJsonOrRaw(right.requestBody || emptyReqBodyText)
       );
     }
     return computeLineDiff(
       prettyJsonOrRaw(left.requestHeaders || {}),
       prettyJsonOrRaw(right.requestHeaders || {})
     );
-  }, [left, right, section]);
+  }, [left, right, section, noRespBodyText, emptyReqBodyText]);
 
   const addedCount = diffLines.filter((d) => d.type === 'added').length;
   const removedCount = diffLines.filter((d) => d.type === 'removed').length;
@@ -40,8 +48,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ left, right }) => {
       {/* Header Summary */}
       <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-3 grid grid-cols-2 gap-4 flex-shrink-0">
         {[
-          { label: 'Baseline (A)', item: left },
-          { label: 'Compare (B)', item: right },
+          { label: baselineLabel, item: left },
+          { label: compareLabel, item: right },
         ].map(({ label, item }) => (
           <div key={item.id + label} className="bg-white border border-slate-200 rounded-lg px-3.5 py-2.5 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1">
@@ -70,9 +78,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ left, right }) => {
       <div className="px-5 py-2 border-b border-slate-200 flex items-center justify-between bg-white flex-shrink-0">
         <div className="flex items-center gap-1">
           {[
-            { id: 'response' as DiffSection, label: 'Response Body' },
-            { id: 'request' as DiffSection, label: 'Request Body' },
-            { id: 'headers' as DiffSection, label: 'Request Headers' },
+            { id: 'response' as DiffSection, label: respBodyLabel },
+            { id: 'request' as DiffSection, label: reqBodyLabel },
+            { id: 'headers' as DiffSection, label: reqHeadersLabel },
           ].map((t) => (
             <button
               key={t.id}

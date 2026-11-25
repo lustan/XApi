@@ -70,6 +70,11 @@ export const MockList: React.FC<MockListProps> = ({
   const clearText = t('clear', 'Clear');
   const ruleNamePlaceholder = t('mockRuleNamePlaceholder', 'Rule name');
   const exportMocksText = t('exportMocks', 'Export Mocks');
+  const toggleRuleText = t('toggleMockRule', 'Toggle mock rule');
+  const enableRuleText = t('mockEnableRule', 'Enable');
+  const disableRuleText = t('mockDisableRule', 'Disable');
+  const modeReplaceShort = t('mockModeReplaceShort', 'replace');
+  const modePatchShort = t('mockModePatchShort', 'patch');
 
   return (
     <div className="flex flex-col h-full">
@@ -155,8 +160,8 @@ export const MockList: React.FC<MockListProps> = ({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onToggleRule(r.id); }}
-                  title={r.enabled ? (globalEnabled ? 'Disable' : 'Paused') : 'Enable'}
-                  aria-label={r.name || r.urlPattern || 'Toggle mock rule'}
+                  title={r.enabled ? (globalEnabled ? disableRuleText : pausedLabel) : enableRuleText}
+                  aria-label={r.name || r.urlPattern || toggleRuleText}
                   className={`flex h-3.5 w-3.5 items-center justify-center rounded-full flex-shrink-0 transition-colors ${r.enabled ? 'bg-emerald-50' : 'bg-transparent'}`}
                 >
                   <span className={`h-1.5 w-1.5 rounded-full transition-all ${ruleActivating ? 'bg-emerald-500' : rulePausedByGlobal ? 'bg-emerald-300' : 'bg-slate-300'}`} />
@@ -172,7 +177,7 @@ export const MockList: React.FC<MockListProps> = ({
                   methodColorClass={getMethodColor(r.method === 'ANY' ? '' : r.method)}
                   metaExtras={
                     <>
-                      <span className="text-[10px] text-slate-400 uppercase">{r.mode === 'replace' ? 'replace' : 'patch'}</span>
+                      <span className="text-[10px] text-slate-400 uppercase">{r.mode === 'replace' ? modeReplaceShort : modePatchShort}</span>
                       {r.matchMode && r.matchMode !== 'startsWith' && (
                         <span className="text-[9px] text-sky-700 bg-sky-50 px-1 rounded font-mono uppercase">{r.matchMode === 'wildcard' ? 'glob' : r.matchMode}</span>
                       )}

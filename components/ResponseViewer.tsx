@@ -175,7 +175,9 @@ export const ResponseViewer: React.FC<ResponseViewerProps> = ({
           <div className="space-y-2">
             {(response.sseEvents || []).length === 0 ? (
               <div className="text-xs text-slate-400 italic py-6 text-center">
-                {response.isStreaming ? 'Waiting for server-sent events...' : 'No events received.'}
+                {response.isStreaming
+                  ? (chrome.i18n.getMessage('sseWaiting') || 'Waiting for server-sent events...')
+                  : (chrome.i18n.getMessage('sseNoEvents') || 'No events received.')}
               </div>
             ) : (
               (response.sseEvents || []).map((ev, idx) => (
@@ -450,7 +452,7 @@ const ResponseContent = ({
 
             {matchStats ? (
                 <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words text-xs font-mono text-slate-800 select-text bg-amber-50/30 p-2 rounded border border-amber-200/70">
-                    {matchStats.count > 0 ? matchStats.text : 'No matching lines found.'}
+                    {matchStats.count > 0 ? matchStats.text : getMessage('noMatchingLinesFound', 'No matching lines found.')}
                 </pre>
             ) : viewMode === 'tree' ? (
                 <div className="min-h-0 flex-1 overflow-auto">

@@ -57,7 +57,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       return;
     }
 
-    setError('Please paste a valid cURL command, Postman v2.1, OpenAPI / Swagger JSON, or XApi backup JSON.');
+    setError(
+      chrome.i18n.getMessage('importInvalidError') ||
+        'Please paste a valid cURL command, Postman v2.1, OpenAPI / Swagger JSON, or XApi backup JSON.'
+    );
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

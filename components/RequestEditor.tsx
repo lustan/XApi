@@ -241,7 +241,10 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
       const authEntry = Object.entries(log.requestHeaders).find(([k, v]) => k.toLowerCase() === 'authorization' && v);
       if (authEntry) {
         upsertHeader('Authorization', authEntry[1]);
-        setAuthStatusMsg(`Applied Authorization header from ${log.method} ${log.url}`);
+        setAuthStatusMsg(
+          chrome.i18n.getMessage('authStatusAppliedHeader', ['Authorization', `${log.method} ${log.url}`]) ||
+            `Applied Authorization header from ${log.method} ${log.url}`
+        );
         return;
       }
     }
@@ -250,23 +253,34 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
       const cookieEntry = Object.entries(log.requestHeaders).find(([k, v]) => k.toLowerCase() === 'cookie' && v);
       if (cookieEntry) {
         upsertHeader('Cookie', cookieEntry[1]);
-        setAuthStatusMsg(`Applied Cookie header from ${log.method} ${log.url}`);
+        setAuthStatusMsg(
+          chrome.i18n.getMessage('authStatusAppliedHeader', ['Cookie', `${log.method} ${log.url}`]) ||
+            `Applied Cookie header from ${log.method} ${log.url}`
+        );
         return;
       }
     }
-    setAuthStatusMsg('No Authorization or Cookie header found in captured requests.');
+    setAuthStatusMsg(
+      chrome.i18n.getMessage('authStatusNoHeaderInCaptured') ||
+        'No Authorization or Cookie header found in captured requests.'
+    );
   };
 
   const handleGrabFromActiveTab = () => {
     if (typeof chrome === 'undefined' || !chrome.tabs?.query || !chrome.tabs?.sendMessage) {
-      setAuthStatusMsg('Page storage reading is available when running inside Chrome Extension.');
+      setAuthStatusMsg(
+        chrome.i18n.getMessage('authStatusExtensionOnly') ||
+          'Page storage reading is available when running inside Chrome Extension.'
+      );
       return;
     }
     try {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tabId = tabs?.[0]?.id;
         if (!tabId) {
-          setAuthStatusMsg('No active browser tab found.');
+          setAuthStatusMsg(
+            chrome.i18n.getMessage('authStatusNoActiveTab') || 'No active browser tab found.'
+          );
           return;
         }
         chrome.tabs.sendMessage(
@@ -274,24 +288,36 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
           { type: 'XAPI_READ_PAGE_STORAGE_TOKEN' },
           (res: { hit?: { key: string; val: string } | null } | undefined) => {
             if (chrome.runtime?.lastError) {
-              setAuthStatusMsg('Reload the target page or ensure it is a standard web page.');
+              setAuthStatusMsg(
+                chrome.i18n.getMessage('authStatusReloadPage') ||
+                  'Reload the target page or ensure it is a standard web page.'
+              );
               return;
             }
             const hit = res?.hit;
             if (!hit) {
-              setAuthStatusMsg('No token key found in active tab localStorage/sessionStorage.');
+              setAuthStatusMsg(
+                chrome.i18n.getMessage('authStatusNoStorageToken') ||
+                  'No token key found in active tab localStorage/sessionStorage.'
+              );
               return;
             }
             const cleaned = hit.val.replace(/^"|"$/g, '').replace(/^bearer\s+/i, '');
             setAuthMode('bearer');
             setBearerToken(cleaned);
             upsertHeader('Authorization', `Bearer ${cleaned}`);
-            setAuthStatusMsg(`Loaded Bearer token from storage key "${hit.key}".`);
+            setAuthStatusMsg(
+              chrome.i18n.getMessage('authStatusLoadedToken', [hit.key]) ||
+                `Loaded Bearer token from storage key "${hit.key}".`
+            );
           }
         );
       });
     } catch {
-      setAuthStatusMsg('Unable to inspect active browser tab storage.');
+      setAuthStatusMsg(
+        chrome.i18n.getMessage('authStatusStorageInspectFailed') ||
+          'Unable to inspect active browser tab storage.'
+      );
     }
   };
 
@@ -464,16 +490,18 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : 'bg-amber-50 text-amber-700 border-amber-200'
               }`}>
-                {activeEnvironment ? `Target: ${activeEnvironment.name}` : 'No Active Environment'}
+                {activeEnvironment
+                  ? (chrome.i18n.getMessage('extractTargetEnv', [activeEnvironment.name]) || `Target: ${activeEnvironment.name}`)
+                  : (chrome.i18n.getMessage('extractNoActiveEnv') || 'No Active Environment')}
               </span>
             </div>
 
             <div className="border border-slate-200 rounded-md overflow-hidden">
               <div className="flex bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2.5 py-1.5 border-b border-slate-200">
                 <div className="w-7" />
-                <div className="w-24 pr-2">Source</div>
-                <div className="flex-1 pr-2">Path / Header</div>
-                <div className="flex-1 pr-2">Variable</div>
+                <div className="w-24 pr-2">{chrome.i18n.getMessage('extractSource') || 'Source'}</div>
+                <div className="flex-1 pr-2">{chrome.i18n.getMessage('extractPathHeader') || 'Path / Header'}</div>
+                <div className="flex-1 pr-2">{chrome.i18n.getMessage('extractTargetVar') || 'Variable'}</div>
                 <div className="w-7" />
               </div>
               {extractRules.map(rule => (
@@ -492,8 +520,8 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
                       onChange={e => updateExtractRules(extractRules.map(r => r.id === rule.id ? { ...r, source: e.target.value as 'body' | 'header' } : r))}
                       className="w-full text-xs border border-slate-200 rounded px-1.5 py-1 bg-white focus:outline-none focus:border-emerald-500"
                     >
-                      <option value="body">JSON Body</option>
-                      <option value="header">Header</option>
+                      <option value="body">{chrome.i18n.getMessage('extractSourceBody') || 'JSON Body'}</option>
+                      <option value="header">{chrome.i18n.getMessage('extractSourceHeader') || 'Header'}</option>
                     </select>
                   </div>
                   <div className="flex-1 pr-2">
@@ -518,7 +546,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
                     <button
                       type="button"
                       onClick={() => updateExtractRules(extractRules.filter(r => r.id !== rule.id))}
-                      aria-label="Remove extract rule"
+                      aria-label={chrome.i18n.getMessage('extractRemoveRule') || 'Remove extract rule'}
                       className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
                     >
                       ×
@@ -528,7 +556,7 @@ export const RequestEditor: React.FC<RequestEditorProps> = ({
               ))}
               {extractRules.length === 0 && (
                 <div className="text-xs text-slate-400 italic py-4 text-center">
-                  No extract rules configured.
+                  {chrome.i18n.getMessage('extractNoRules') || 'No extract rules configured.'}
                 </div>
               )}
             </div>

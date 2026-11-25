@@ -55,33 +55,42 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   }, [isOpen]);
 
   const items = useMemo<CommandItem[]>(() => {
+    const actionsGroup = chrome.i18n.getMessage('cmdGroupActions') || 'Actions';
+    const envsGroup = chrome.i18n.getMessage('cmdGroupEnvs') || 'Environments';
+    const requestsGroup = chrome.i18n.getMessage('cmdGroupRequests') || 'Saved Requests';
+    const mocksGroup = chrome.i18n.getMessage('cmdGroupMocks') || 'Mock Rules';
+    const capturedGroup = chrome.i18n.getMessage('cmdGroupCaptured') || 'Captured';
+    const requestFallback = chrome.i18n.getMessage('requestFallback') || 'Request';
+    const mockFallback = chrome.i18n.getMessage('mockFallback') || 'Mock Rule';
+
     const all: CommandItem[] = [
       {
         id: 'cmd-new-req',
-        group: 'Actions',
+        group: actionsGroup,
         label: chrome.i18n.getMessage('newRequest') || 'New Request',
         onSelect: onCreateRequest,
       },
       {
         id: 'cmd-import',
-        group: 'Actions',
+        group: actionsGroup,
         label: chrome.i18n.getMessage('importUniversal') || 'Import (cURL / Postman / OpenAPI)',
         onSelect: onOpenImport,
       },
       {
         id: 'cmd-envs',
-        group: 'Actions',
+        group: actionsGroup,
         label: chrome.i18n.getMessage('manageEnvironments') || 'Manage Environments',
         onSelect: onOpenEnvs,
       },
     ];
 
     environments.forEach((env) => {
+      const varCount = env.variables.filter((v) => v.enabled).length;
       all.push({
         id: `env-${env.id}`,
-        group: 'Environments',
-        label: `Switch Environment: ${env.name}`,
-        sublabel: `${env.variables.filter((v) => v.enabled).length} variables`,
+        group: envsGroup,
+        label: chrome.i18n.getMessage('switchEnvironmentLabel', [env.name]) || `Switch Environment: ${env.name}`,
+        sublabel: chrome.i18n.getMessage('variablesCountLabel', [String(varCount)]) || `${varCount} variables`,
         onSelect: () => onSwitchEnv(env.id),
       });
     });
@@ -89,8 +98,8 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     requests.forEach((r) => {
       all.push({
         id: `req-${r.id}`,
-        group: 'Saved Requests',
-        label: r.name || r.url || 'Request',
+        group: requestsGroup,
+        label: r.name || r.url || requestFallback,
         sublabel: r.url,
         method: r.method,
         onSelect: () => onSelectRequest(r),
@@ -100,8 +109,8 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     mockRules.forEach((m) => {
       all.push({
         id: `mock-${m.id}`,
-        group: 'Mock Rules',
-        label: m.name || m.urlPattern || 'Mock Rule',
+        group: mocksGroup,
+        label: m.name || m.urlPattern || mockFallback,
         sublabel: m.urlPattern,
         method: m.method,
         onSelect: () => onSelectMockRule(m),
@@ -111,7 +120,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
     history.slice(0, 30).forEach((h) => {
       all.push({
         id: `log-${h.id}`,
-        group: 'Captured',
+        group: capturedGroup,
         label: h.graphqlOperationName ? `${h.graphqlOperationName} · ${h.url}` : h.url,
         sublabel: `${h.status || 'ERR'}`,
         method: h.method,
@@ -130,7 +139,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
           item.group.toLowerCase().includes(q)
       )
       .slice(0, 25);
-  }, [query, requests, history, mockRules, environments, onCreateRequest, onOpenImport, onOpenEnvs, onSelectRequest, onSelectLog, onSelectMockRule, onSwitchEnv]);
+  }, [isOpen, query, requests, history, mockRules, environments, onCreateRequest, onOpenImport, onOpenEnvs, onSelectRequest, onSelectLog, onSelectMockRule, onSwitchEnv]);
 
   if (!isOpen) return null;
 
@@ -187,7 +196,9 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
         <div className="max-h-80 overflow-y-auto py-1.5">
           {items.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">No matching items found.</div>
+            <div className="py-8 text-center text-xs text-slate-400">
+              {chrome.i18n.getMessage('noMatchingItemsFound') || 'No matching items found.'}
+            </div>
           ) : (
             items.map((item, idx) => (
               <button

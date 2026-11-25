@@ -1,16 +1,43 @@
 import enMessages from './_locales/en/messages.json';
 import zhCNMessages from './_locales/zh_CN/messages.json';
 
-type MessageCatalog = Record<string, { message: string }>;
+type MessageEntry = {
+  message: string;
+  placeholders?: Record<string, { content: string }>;
+};
+type MessageCatalog = Record<string, MessageEntry>;
 
 const STORAGE_PREFIX = 'xapi_chrome_storage:';
 const memoryFallback = new Map<string, string>();
 const changeListeners = new Set<(changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void>();
 
-const formatMessage = (message: string, substitutions?: string | string[]) => {
-  if (substitutions === undefined) return message;
-  const values = Array.isArray(substitutions) ? substitutions : [substitutions];
-  return message.replace(/\$(\d+)/g, (_, index) => values[Number(index) - 1] ?? '');
+const formatMessage = (entryOrMsg: MessageEntry | string, substitutions?: string | string[]) => {
+  const raw = typeof entryOrMsg === 'string' ? entryOrMsg : entryOrMsg.message;
+  const placeholders = typeof entryOrMsg === 'string' ? undefined : entryOrMsg.placeholders;
+  const values =
+    substitutions === undefined
+      ? []
+      : Array.isArray(substitutions)
+        ? substitutions
+        : [substitutions];
+
+  let out = raw;
+  if (placeholders) {
+    const lowerMap: Record<string, string> = {};
+    Object.entries(placeholders).forEach(([k, v]) => {
+      if (v && typeof v.content === 'string') {
+        lowerMap[k.toLowerCase()] = v.content.replace(/\$(\d+)/g, (_, index) => values[Number(index) - 1] ?? '');
+      }
+    });
+    out = out.replace(/\$([A-Za-z0-9_@]+)\$/g, (full, name) => {
+      const key = name.toLowerCase();
+      return key in lowerMap ? lowerMap[key] : full;
+    });
+  }
+  if (values.length > 0) {
+    out = out.replace(/\$(\d+)/g, (_, index) => values[Number(index) - 1] ?? '');
+  }
+  return out;
 };
 
 const getSystemCatalog = (): MessageCatalog => {
@@ -103,7 +130,7 @@ const installChromePolyfill = () => {
         const primary = getSystemCatalog();
         const entry = primary[key] || (enMessages as MessageCatalog)[key];
         if (!entry?.message) return '';
-        return formatMessage(entry.message, substitutions);
+        return formatMessage(entry, substitutions);
       },
       getUILanguage: () => (typeof navigator !== 'undefined' ? navigator.language : 'en'),
     };

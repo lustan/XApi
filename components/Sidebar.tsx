@@ -213,7 +213,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         method={req.method}
         methodColorClass={getMethodColor(req.method)}
         title={req.name}
-        titleFallback={origin || 'Request'}
+        titleFallback={origin || chrome.i18n.getMessage('requestFallback') || 'Request'}
         subtitle={subtitle}
         editable
         editTrigger={reqRenameTicks[req.id]}
@@ -348,7 +348,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {isSettingsOpen && (
                     <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 shadow-xl rounded-lg z-[110] py-1 animate-fadeIn overflow-hidden">
                         <div className="px-4 py-2 border-b border-slate-100 bg-slate-50/70">
-                            <span className="text-[11px] font-semibold text-slate-400">Version {APP_CONFIG.VERSION}</span>
+                            <span className="text-[11px] font-semibold text-slate-400">
+                              {chrome.i18n.getMessage("versionLabel", [APP_CONFIG.VERSION]) || `Version ${APP_CONFIG.VERSION}`}
+                            </span>
                         </div>
                         {onExportWorkspace && (
                           <button
@@ -504,7 +506,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                  {selectedLogs.length > 0 && (
                    <div className="flex items-center justify-between gap-1.5 bg-emerald-50 border border-emerald-200 rounded px-2 py-1 text-[11px]">
-                     <span className="font-semibold text-emerald-800 tabular-nums">{selectedLogs.length} selected</span>
+                     <span className="font-semibold text-emerald-800 tabular-nums">
+                       {chrome.i18n.getMessage("selectedCountLabel", [String(selectedLogs.length)]) || `${selectedLogs.length} selected`}
+                     </span>
                      <div className="flex items-center gap-1.5">
                        {selectedLogs.length === 2 && onCompareLogs && (
                          <button
@@ -527,6 +531,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                        <button
                          type="button"
                          onClick={() => setSelectedLogIds([])}
+                         aria-label={clearText}
                          className="text-slate-500 hover:text-slate-700 px-1"
                        >
                          ×
@@ -566,7 +571,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                            <input
                              type="checkbox"
                              checked={isChecked}
-                             aria-label={`Select ${item.url}`}
+                             aria-label={chrome.i18n.getMessage("selectItemLabel", [item.url]) || `Select ${item.url}`}
                              onClick={(e) => e.stopPropagation()}
                              onChange={() => toggleSelectLog(item.id)}
                              className="h-3 w-3 rounded accent-emerald-600 cursor-pointer flex-shrink-0"

@@ -11,9 +11,9 @@ interface JsonTreeProps {
   className?: string;
 }
 
-const t = (key: string, fallback: string) => {
+const t = (key: string, fallback: string, substitutions?: string | string[]) => {
   try {
-    const m = chrome?.i18n?.getMessage?.(key);
+    const m = chrome?.i18n?.getMessage?.(key, substitutions);
     return m || fallback;
   } catch {
     return fallback;
@@ -87,8 +87,12 @@ const TreeNode: React.FC<NodeProps> = ({
   const open = isArray ? '[' : '{';
   const close = isArray ? ']' : '}';
   const summary = isArray
-    ? `${entries.length} ${entries.length === 1 ? 'item' : 'items'}`
-    : `${entries.length} ${entries.length === 1 ? 'key' : 'keys'}`;
+    ? (entries.length === 1
+        ? t('jsonItemSingleSummary', '1 item')
+        : t('jsonItemsSummary', `${entries.length} items`, [String(entries.length)]))
+    : (entries.length === 1
+        ? t('jsonKeySingleSummary', '1 key')
+        : t('jsonKeysSummary', `${entries.length} keys`, [String(entries.length)]));
 
   return (
     <div>

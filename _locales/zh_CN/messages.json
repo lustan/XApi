@@ -487,10 +487,6 @@
     "message": "已启用",
     "description": "单条 Mock 规则启用开关"
   },
-  "mockRuleNamePlaceholder": {
-    "message": "为这条规则起个名字",
-    "description": "Mock 规则名称占位符"
-  },
   "mockMatchSection": {
     "message": "匹配",
     "description": "Mock 编辑器匹配区块标题"
@@ -730,5 +726,152 @@
   "sseStreamTab": { "message": "事件流 (SSE)" },
   "findInResponse": { "message": "在响应中搜索..." },
   "commandPaletteTitle": { "message": "全局搜索与快捷指令" },
-  "commandPalettePlaceholder": { "message": "搜索接口、抓包记录、Mock 规则或快捷指令..." }
+  "commandPalettePlaceholder": { "message": "搜索接口、抓包记录、Mock 规则或快捷指令..." },
+  "newFolder": { "message": "新建文件夹" },
+  "activeEnvironment": { "message": "当前环境" },
+  "export": { "message": "导出" },
+  "headerProfile": { "message": "请求头配置方案" },
+  "headerProfileDefaultPrefix": {
+    "message": "方案 $NUM$",
+    "placeholders": {
+      "num": { "content": "$1" }
+    }
+  },
+  "setHeaderOpTitle": { "message": "设置请求头的值" },
+  "removeHeaderOpTitle": { "message": "移除匹配的请求头" },
+  "removeHeaderTag": { "message": "（移除）" },
+  "resolvedUrlLabel": { "message": "解析结果" },
+  "httpMethodLabel": { "message": "请求方法" },
+  "diffTabPrefix": { "message": "对比" },
+  "capturedCollectionName": {
+    "message": "抓包保存 ($COUNT$)",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "openCommandPalette": { "message": "打开快捷命令面板 (Cmd/Ctrl + K)" },
+  "toggleMockRule": { "message": "切换挡板规则" },
+  "mockEnableRule": { "message": "启用" },
+  "mockDisableRule": { "message": "禁用" },
+  "mockModeReplaceShort": { "message": "整包" },
+  "mockModePatchShort": { "message": "字段" },
+  "mockValueTypeTitle": { "message": "数据类型" },
+  "mockTypeString": { "message": "字符串" },
+  "mockTypeNumber": { "message": "数字" },
+  "mockTypeBoolean": { "message": "布尔值" },
+  "mockTypeArray": { "message": "数组" },
+  "mockTypeObject": { "message": "对象" },
+  "mockTypeNull": { "message": "Null" },
+  "mockRemoveField": { "message": "移除字段" },
+  "mockDeleteScenario": { "message": "删除场景" },
+  "queryMatchPlaceholder": { "message": "例如 role=admin" },
+  "bodyMatchPlaceholder": { "message": "例如 GetUserProfile" },
+  "authStatusAppliedHeader": {
+    "message": "已从 $SOURCE$ 提取并应用 $HEADER$ 请求头",
+    "placeholders": {
+      "header": { "content": "$1" },
+      "source": { "content": "$2" }
+    }
+  },
+  "authStatusNoHeaderInCaptured": { "message": "已捕获的请求中未找到 Authorization 或 Cookie 请求头。" },
+  "authStatusExtensionOnly": { "message": "读取页面存储 Token 仅在 Chrome 扩展环境中可用。" },
+  "authStatusNoActiveTab": { "message": "未找到当前激活的浏览器标签页。" },
+  "authStatusReloadPage": { "message": "请刷新目标页面，或确认当前标签页为标准网页。" },
+  "authStatusNoStorageToken": { "message": "当前页面的 localStorage / sessionStorage 中未找到 Token 键。" },
+  "authStatusLoadedToken": {
+    "message": "已从页面存储键 \"$KEY$\" 读取并加载 Bearer Token。",
+    "placeholders": {
+      "key": { "content": "$1" }
+    }
+  },
+  "authStatusStorageInspectFailed": { "message": "无法读取当前浏览器标签页的存储内容。" },
+  "extractTargetEnv": {
+    "message": "写入目标：$NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "extractNoActiveEnv": { "message": "未激活环境变量" },
+  "extractSource": { "message": "来源" },
+  "extractPathHeader": { "message": "JSON 路径 / 请求头" },
+  "extractTargetVar": { "message": "目标变量名" },
+  "extractSourceBody": { "message": "JSON 响应体" },
+  "extractSourceHeader": { "message": "响应头" },
+  "extractRemoveRule": { "message": "移除提取规则" },
+  "extractNoRules": { "message": "暂未配置提取规则。" },
+  "sseWaiting": { "message": "正在等待服务端推送事件..." },
+  "sseNoEvents": { "message": "未收到事件流数据。" },
+  "noMatchingLinesFound": { "message": "未找到匹配的行。" },
+  "envDefaultPrefix": { "message": "环境" },
+  "environmentsHintPrefix": { "message": "在 URL、请求头、参数或请求体中使用" },
+  "environmentsHintSuffix": { "message": "引用环境变量。" },
+  "noEnvironmentsYet": { "message": "暂无环境变量组。" },
+  "environmentNameLabel": { "message": "环境名称" },
+  "envActive": { "message": "当前生效" },
+  "envSetActive": { "message": "设为激活" },
+  "environmentsEmptyDesc": { "message": "创建环境组以复用不同环境下的基础 URL、Token 和 ID。" },
+  "cmdGroupActions": { "message": "快捷操作" },
+  "cmdGroupEnvs": { "message": "环境变量" },
+  "cmdGroupRequests": { "message": "已保存请求" },
+  "cmdGroupMocks": { "message": "Mock 挡板" },
+  "cmdGroupCaptured": { "message": "抓包记录" },
+  "switchEnvironmentLabel": {
+    "message": "切换环境：$NAME$",
+    "placeholders": {
+      "name": { "content": "$1" }
+    }
+  },
+  "variablesCountLabel": {
+    "message": "$COUNT$ 个变量",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "noMatchingItemsFound": { "message": "没有匹配的结果。" },
+  "diffBaseline": { "message": "基准 (A)" },
+  "diffCompare": { "message": "对比 (B)" },
+  "diffNoRespBody": { "message": "（未捕获到响应体）" },
+  "diffEmptyReqBody": { "message": "（请求体为空）" },
+  "diffResponseBody": { "message": "响应体" },
+  "diffRequestBody": { "message": "请求体" },
+  "diffRequestHeaders": { "message": "请求头" },
+  "copyCode": { "message": "复制代码" },
+  "codeGenInvalidJson": { "message": "// 响应体不是有效的 JSON。" },
+  "codeGenTsHint": { "message": "// 发送包含 JSON 响应体的请求（或填写原始 JSON 请求体）即可自动推导 TypeScript 类型。" },
+  "importInvalidError": { "message": "请粘贴有效的 cURL 命令、Postman v2.1、OpenAPI / Swagger 或 XApi 备份 JSON。" },
+  "selectedCountLabel": {
+    "message": "已选 $COUNT$ 项",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "selectItemLabel": {
+    "message": "选择 $ITEM$",
+    "placeholders": {
+      "item": { "content": "$1" }
+    }
+  },
+  "versionLabel": {
+    "message": "版本 $VER$",
+    "placeholders": {
+      "ver": { "content": "$1" }
+    }
+  },
+  "copySuffix": { "message": "副本" },
+  "requestFallback": { "message": "请求" },
+  "mockFallback": { "message": "挡板" },
+  "jsonItemsSummary": {
+    "message": "$COUNT$ 项",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "jsonItemSingleSummary": { "message": "1 项" },
+  "jsonKeysSummary": {
+    "message": "$COUNT$ 个键",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "jsonKeySingleSummary": { "message": "1 个键" }
 }

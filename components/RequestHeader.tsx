@@ -92,6 +92,8 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({
     const copiedText = chrome.i18n.getMessage("copied") || 'Copied';
     const copyCurlText = chrome.i18n.getMessage("copyCurlTooltip") || 'Copy as cURL';
     const codeSnippetText = chrome.i18n.getMessage("codeSnippet") || 'Code';
+    const resolvedUrlLabelText = chrome.i18n.getMessage("resolvedUrlLabel") || 'Resolved';
+    const httpMethodLabelText = chrome.i18n.getMessage("httpMethodLabel") || 'HTTP Method';
 
     return (
         <div className="border-b border-slate-200 bg-white px-3 py-2.5">
@@ -102,7 +104,7 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({
                         <button
                             type="button"
                             onClick={() => setIsMethodOpen(!isMethodOpen)}
-                            aria-label="HTTP Method"
+                            aria-label={httpMethodLabelText}
                             aria-expanded={isMethodOpen}
                             className="rounded-l-md border border-r-0 border-slate-300 px-3 py-2 text-xs font-bold bg-slate-50 hover:bg-slate-100 focus:z-10 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 w-24 text-slate-700 flex items-center justify-between h-full transition-colors"
                         >
@@ -217,7 +219,7 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({
             {resolvedUrlPreview && (
                 <div className="mt-1.5 px-1 flex items-center gap-1.5 text-[11px] font-mono text-slate-500 truncate" title={resolvedUrlPreview}>
                     <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded flex-shrink-0">
-                        Resolved
+                        {resolvedUrlLabelText}
                     </span>
                     <span className="truncate">{resolvedUrlPreview}</span>
                 </div>

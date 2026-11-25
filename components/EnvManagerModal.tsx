@@ -30,7 +30,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
   const currentEnv = environments.find((e) => e.id === currentSelectedId) || null;
 
   const addEnv = () => {
-    const nextEnv = createEnvironment(`Env ${environments.length + 1}`);
+    const nextEnv = createEnvironment(`${t('envDefaultPrefix', 'Env')} ${environments.length + 1}`);
     const next = [...environments, nextEnv];
     setSelectedId(nextEnv.id);
     onSaveEnvironments(next, activeEnvironmentId || nextEnv.id);
@@ -88,7 +88,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
           <div>
             <h3 className="text-sm font-semibold text-slate-900">{t('environmentsTitle', 'Environments')}</h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Use <code className="font-mono text-emerald-700">{'{{variable}}'}</code> inside URLs, Headers, Params, and Body.
+              {t('environmentsHintPrefix', 'Use')} <code className="font-mono text-emerald-700">{'{{variable}}'}</code> {t('environmentsHintSuffix', 'inside URLs, Headers, Params, and Body.')}
             </p>
           </div>
           <button
@@ -121,7 +121,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
             <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
               {environments.length === 0 ? (
                 <div className="text-[11px] text-slate-400 text-center py-6 px-2">
-                  No environments yet.
+                  {t('noEnvironmentsYet', 'No environments yet.')}
                 </div>
               ) : (
                 environments.map((env) => {
@@ -142,7 +142,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); deleteEnv(env.id); }}
-                        aria-label={`Delete ${env.name}`}
+                        aria-label={`${t('delete', 'Delete')} ${env.name}`}
                         className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 p-0.5"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +165,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
                     type="text"
                     value={currentEnv.name}
                     onChange={(e) => updateEnv(currentEnv.id, { name: e.target.value })}
-                    aria-label="Environment name"
+                    aria-label={t('environmentNameLabel', 'Environment name')}
                     className="text-sm font-semibold text-slate-800 border border-slate-200 focus:border-emerald-500 rounded-md px-2.5 py-1 focus:outline-none flex-1"
                   />
                   <button
@@ -182,7 +182,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
                         : 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200'
                     }`}
                   >
-                    {activeEnvironmentId === currentEnv.id ? 'Active' : 'Set Active'}
+                    {activeEnvironmentId === currentEnv.id ? t('envActive', 'Active') : t('envSetActive', 'Set Active')}
                   </button>
                 </div>
 
@@ -191,7 +191,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
                     <div className="flex bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2.5 py-1.5 border-b border-slate-200">
                       <div className="w-7" />
                       <div className="w-[40%] pr-2">{t('variableName', 'Variable')}</div>
-                      <div className="flex-1">Value</div>
+                      <div className="flex-1">{t('value', 'Value')}</div>
                       <div className="w-7" />
                     </div>
                     {currentEnv.variables.map((v) => (
@@ -251,7 +251,7 @@ export const EnvManagerModal: React.FC<EnvManagerModalProps> = ({
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-xs p-6 text-center">
-                <p className="mb-3">Create an environment to store reusable URLs, tokens, and IDs.</p>
+                <p className="mb-3">{t('environmentsEmptyDesc', 'Create an environment to store reusable URLs, tokens, and IDs.')}</p>
                 <button
                   type="button"
                   onClick={addEnv}
