@@ -8,18 +8,23 @@
  * IMPORTANT — IIFE wrapping is mandatory:
  * Chrome injects this file as a CLASSIC script in the page's MAIN world,
  * so any top-level `const`/`let` becomes a global lexical binding that
- * shadows page globals. Rollup minifies our local consts to single-letter
- * names (`$`, `f`, `y`, ...), which would shadow jQuery's `$` and break
- * every legacy site that does `$.extend(...)`. Wrapping the runtime in
- * an IIFE keeps every binding scoped to this function. Do NOT remove.
+ * shadows page globals. Wrapping the runtime in an IIFE keeps every binding
+ * scoped to this function. Do NOT remove.
  */
 
-type RuleMatchMode = 'startsWith';
+type RuleMatchMode = 'startsWith' | 'exact' | 'wildcard' | 'regex';
 type MockMode = 'replace' | 'patch-json';
 
 interface JsonPatch {
   id: string;
   path: string;
+  value: string;
+  enabled: boolean;
+}
+
+interface MockResponseHeader {
+  id: string;
+  key: string;
   value: string;
   enabled: boolean;
 }
@@ -31,10 +36,15 @@ interface MockRule {
   urlPattern: string;
   matchMode: RuleMatchMode;
   method: string;
+  queryMatch?: string;
+  bodyMatch?: string;
+  delayMs?: number;
+  simulateNetworkError?: boolean;
   mode: MockMode;
   replaceStatus?: number;
   replaceContentType?: string;
   replaceBody?: string;
+  replaceHeaders?: MockResponseHeader[];
   jsonPatches?: JsonPatch[];
 }
 
@@ -64,9 +74,6 @@ const reportHit = (ruleId: string) => {
   window.postMessage({ source: MSG_TAG, type: 'hit', ruleId }, '*');
 };
 
-// Forward a captured JSON response body to the bridge → background, so the
-// recorded log entry can be augmented. Best-effort and bounded; failures here
-// must never affect the underlying request.
 const RESP_BODY_LIMIT = 200 * 1024; // 200KB
 const reportResponse = (
   url: string,
@@ -107,21 +114,118 @@ const normalizeUrl = (url: string): string => {
   }
 };
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 // ----- match ------
-const matchUrl = (url: string, pattern: string, _mode: RuleMatchMode): boolean => {
-  if (!pattern) return false;
-  return url.startsWith(pattern);
+const wildcardToRegex = (pattern: string): RegExp => {
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+  return new RegExp(`^${escaped}$`);
 };
 
-const matchRule = (url: string, method: string): MockRule | undefined => {
+const matchUrl = (url: string, pattern: string, mode: RuleMatchMode = 'startsWith'): boolean => {
+  if (!pattern || !url) return false;
+  switch (mode) {
+    case 'exact':
+      return url === pattern;
+    case 'wildcard':
+      try { return wildcardToRegex(pattern).test(url); } catch { return false; }
+    case 'regex':
+      try { return new RegExp(pattern).test(url); } catch { return false; }
+    case 'startsWith':
+    default:
+      return url.startsWith(pattern);
+  }
+};
+
+const bodyToString = (body: any): string => {
+  if (body == null) return '';
+  if (typeof body === 'string') return body;
+  try { return JSON.stringify(body); } catch { return ''; }
+};
+
+const matchRule = (url: string, method: string, reqBody?: any): MockRule | undefined => {
   if (!state.enabled) return undefined;
   const m = (method || 'GET').toUpperCase();
+  const bodyStr = bodyToString(reqBody);
   for (const r of state.rules) {
     if (!r.enabled) continue;
     if (r.method && r.method !== 'ANY' && r.method !== m) continue;
-    if (matchUrl(url, r.urlPattern, r.matchMode)) return r;
+    if (!matchUrl(url, r.urlPattern, r.matchMode)) continue;
+    if (r.queryMatch && r.queryMatch.trim()) {
+      const qIdx = url.indexOf('?');
+      const qs = qIdx >= 0 ? url.slice(qIdx + 1) : '';
+      if (!qs.includes(r.queryMatch.trim())) continue;
+    }
+    if (r.bodyMatch && r.bodyMatch.trim()) {
+      if (!bodyStr.includes(r.bodyMatch.trim())) continue;
+    }
+    return r;
   }
   return undefined;
+};
+
+// ----- template variables -----
+const readDotPath = (obj: any, path: string): unknown => {
+  if (!obj || typeof obj !== 'object' || !path) return undefined;
+  let cur: any = obj;
+  const parts = path.split('.');
+  for (let i = 0; i < parts.length; i++) {
+    const seg = parts[i];
+    if (!seg) continue;
+    if (cur == null || typeof cur !== 'object') return undefined;
+    cur = cur[seg];
+  }
+  return cur;
+};
+
+const applyTemplate = (body: string, url: string, method: string, reqBody?: any): string => {
+  if (!body || !body.includes('{{')) return body;
+  let qs: URLSearchParams | null = null;
+  const getQs = () => {
+    if (qs) return qs;
+    try { qs = new URL(url).searchParams; } catch { qs = new URLSearchParams(); }
+    return qs;
+  };
+  let parsedBody: any = null;
+  let triedBody = false;
+  const getParsedBody = () => {
+    if (triedBody) return parsedBody;
+    triedBody = true;
+    if (reqBody && typeof reqBody === 'object') parsedBody = reqBody;
+    else if (typeof reqBody === 'string') {
+      try { parsedBody = JSON.parse(reqBody); } catch { parsedBody = null; }
+    }
+    return parsedBody;
+  };
+
+  return body.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (match, rawKey: string) => {
+    const key = rawKey.trim();
+    if (key === 'timestamp' || key === 'now' || key === '$timestamp') return String(Date.now());
+    if (key === 'isoDate' || key === '$isoTimestamp') return new Date().toISOString();
+    if (key === 'uuid' || key === '$uuid') {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
+    if (key === 'method') return (method || 'GET').toUpperCase();
+    if (key === 'url') return url;
+    if (key.startsWith('query.')) {
+      const val = getQs().get(key.slice(6));
+      return val !== null ? val : match;
+    }
+    if (key.startsWith('body.')) {
+      const val = readDotPath(getParsedBody(), key.slice(5));
+      if (val === undefined) return match;
+      return typeof val === 'object' ? JSON.stringify(val) : String(val);
+    }
+    return match;
+  });
 };
 
 // ----- json patch -----
@@ -179,14 +283,26 @@ const applyJsonPatches = (data: any, patches?: JsonPatch[]): number => {
 };
 
 // ----- response builders -----
-const buildReplaceResponse = (rule: MockRule): Response => {
-  const body = rule.replaceBody ?? '';
+const buildHeadersRecord = (rule: MockRule, ct: string): Record<string, string> => {
+  const headers: Record<string, string> = { 'content-type': ct, 'x-xapi-mock': rule.id };
+  if (Array.isArray(rule.replaceHeaders)) {
+    for (const h of rule.replaceHeaders) {
+      if (h && h.enabled && h.key && h.key.trim()) {
+        headers[h.key.trim().toLowerCase()] = h.value ?? '';
+      }
+    }
+  }
+  return headers;
+};
+
+const buildReplaceResponse = (rule: MockRule, url: string, method: string, reqBody?: any): Response => {
+  const body = applyTemplate(rule.replaceBody ?? '', url, method, reqBody);
   const status = rule.replaceStatus && rule.replaceStatus > 0 ? rule.replaceStatus : 200;
   const ct = rule.replaceContentType || 'application/json';
   return new Response(body, {
     status,
     statusText: 'OK',
-    headers: { 'content-type': ct, 'x-xapi-mock': rule.id }
+    headers: buildHeadersRecord(rule, ct)
   });
 };
 
@@ -195,6 +311,7 @@ const _fetch = window.fetch;
 window.fetch = async function patchedFetch(input: RequestInfo | URL, init?: RequestInit) {
   let url = '';
   let method = (init?.method || 'GET').toUpperCase();
+  const reqBody = init?.body;
   try {
     if (typeof input === 'string') url = input;
     else if (input instanceof URL) url = input.href;
@@ -205,10 +322,8 @@ window.fetch = async function patchedFetch(input: RequestInfo | URL, init?: Requ
   } catch { /* noop */ }
 
   url = normalizeUrl(url);
-  const rule = url ? matchRule(url, method) : undefined;
+  const rule = url ? matchRule(url, method, reqBody) : undefined;
   if (!rule) {
-    // No mock — let the request through, but try to capture JSON response
-    // for the recorded log. Cloning is cheap and safe; failures swallowed.
     const res = await _fetch.call(window, input as any, init);
     try {
       const ct = res.headers.get('content-type') || '';
@@ -221,10 +336,20 @@ window.fetch = async function patchedFetch(input: RequestInfo | URL, init?: Requ
     return res;
   }
 
+  if (rule.delayMs && rule.delayMs > 0) {
+    await sleep(rule.delayMs);
+  }
+
+  if (rule.simulateNetworkError) {
+    reportHit(rule.id);
+    console.debug(`${TAG} network-error`, method, url, '→', rule.name);
+    throw new TypeError('Failed to fetch (simulated by XApi Mock)');
+  }
+
   if (rule.mode === 'replace') {
     reportHit(rule.id);
     console.debug(`${TAG} replace`, method, url, '→', rule.name);
-    return buildReplaceResponse(rule);
+    return buildReplaceResponse(rule, url, method, reqBody);
   }
 
   // patch-json: pass through, then rewrite body if JSON
@@ -234,7 +359,6 @@ window.fetch = async function patchedFetch(input: RequestInfo | URL, init?: Requ
   let data: any;
   try { data = await res.clone().json(); } catch { return res; }
   if (data == null || typeof data !== 'object') return res;
-  // Report the ORIGINAL response body before applying patches.
   try { reportResponse(url, method, res.status, ct, JSON.stringify(data)); } catch { /* noop */ }
   const n = applyJsonPatches(data, rule.jsonPatches);
   if (n === 0) return res;
@@ -289,13 +413,49 @@ XHR.prototype.setRequestHeader = function (this: XMLHttpRequest, name: string, v
   return origSetRequestHeader.call(this, name, value);
 };
 
-const fakeXhrResponse = (xhr: XMLHttpRequest, rule: MockRule, body: string, status: number, contentType: string) => {
+const fakeXhrError = (xhr: XMLHttpRequest, delay: number) => {
+  const def = (key: string, val: any) => {
+    try { Object.defineProperty(xhr, key, { configurable: true, get: () => val }); } catch { /* noop */ }
+  };
+  def('readyState', 4);
+  def('status', 0);
+  def('statusText', '');
+  def('responseText', '');
+  def('response', '');
+  def('responseURL', META.get(xhr)?.url || '');
+  const fire = (type: string) => {
+    try {
+      const ev = type === 'readystatechange'
+        ? new Event('readystatechange')
+        : new ProgressEvent(type, { lengthComputable: false, loaded: 0, total: 0 });
+      if (typeof xhr.dispatchEvent === 'function') xhr.dispatchEvent(ev);
+      else if (type === 'readystatechange' && xhr.onreadystatechange) xhr.onreadystatechange(ev as any);
+      else if (type === 'error' && xhr.onerror) xhr.onerror(ev as any);
+    } catch { /* noop */ }
+  };
+  setTimeout(() => {
+    fire('readystatechange');
+    fire('error');
+    fire('loadend');
+  }, delay);
+};
+
+const fakeXhrResponse = (
+  xhr: XMLHttpRequest,
+  rule: MockRule,
+  body: string,
+  status: number,
+  contentType: string,
+  delay: number
+) => {
   const respType = xhr.responseType || '';
   let parsedResponse: any = body;
   if (respType === 'json') {
     try { parsedResponse = JSON.parse(body); } catch { parsedResponse = null; }
   }
-  // Override read-only properties
+  const headersMap = buildHeadersRecord(rule, contentType);
+  const rawHeadersStr = Object.entries(headersMap).map(([k, v]) => `${k}: ${v}`).join('\r\n') + '\r\n';
+
   const def = (key: string, val: any) => {
     try { Object.defineProperty(xhr, key, { configurable: true, get: () => val }); } catch { /* noop */ }
   };
@@ -306,15 +466,12 @@ const fakeXhrResponse = (xhr: XMLHttpRequest, rule: MockRule, body: string, stat
   def('response', parsedResponse);
   def('responseURL', META.get(xhr)?.url || '');
   def('responseType', respType);
-  def('getAllResponseHeaders', () => `content-type: ${contentType}\r\nx-xapi-mock: ${rule.id}\r\n`);
+  def('getAllResponseHeaders', () => rawHeadersStr);
   def('getResponseHeader', (name: string) => {
     const lower = name.toLowerCase();
-    if (lower === 'content-type') return contentType;
-    if (lower === 'x-xapi-mock') return rule.id;
-    return null;
+    return Object.prototype.hasOwnProperty.call(headersMap, lower) ? headersMap[lower] : null;
   });
 
-  // Fire events asynchronously to mimic real network
   const fire = (type: string) => {
     try {
       const ev = type === 'readystatechange'
@@ -331,16 +488,13 @@ const fakeXhrResponse = (xhr: XMLHttpRequest, rule: MockRule, body: string, stat
     fire('readystatechange');
     fire('load');
     fire('loadend');
-  }, 0);
+  }, delay);
 };
 
 XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
   const meta = META.get(this);
-  const rule = meta ? matchRule(meta.url, meta.method) : undefined;
+  const rule = meta ? matchRule(meta.url, meta.method, body) : undefined;
   if (!rule) {
-    // No mock — attach a capture-only listener so we can ship the JSON
-    // response body to the recorded log. addEventListener composes with
-    // whatever the caller later sets on .onreadystatechange / .onload.
     if (meta) {
       const xhr = this;
       let captured = false;
@@ -364,15 +518,26 @@ XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
     return origSend.call(this, body);
   }
 
+  const delay = rule.delayMs && rule.delayMs > 0 ? rule.delayMs : 0;
+
+  if (rule.simulateNetworkError) {
+    reportHit(rule.id);
+    console.debug(`${TAG} network-error(xhr)`, meta!.method, meta!.url, '→', rule.name);
+    fakeXhrError(this, delay);
+    return;
+  }
+
   if (rule.mode === 'replace') {
     reportHit(rule.id);
     console.debug(`${TAG} replace(xhr)`, meta!.method, meta!.url, '→', rule.name);
+    const renderedBody = applyTemplate(rule.replaceBody ?? '', meta!.url, meta!.method, body);
     fakeXhrResponse(
       this,
       rule,
-      rule.replaceBody ?? '',
+      renderedBody,
       rule.replaceStatus && rule.replaceStatus > 0 ? rule.replaceStatus : 200,
-      rule.replaceContentType || 'application/json'
+      rule.replaceContentType || 'application/json',
+      delay
     );
     return;
   }
@@ -405,7 +570,6 @@ XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
       try { data = JSON.parse(raw); } catch { return; }
     }
     if (raw == null || data == null || typeof data !== 'object') return;
-    // Forward the ORIGINAL (pre-patch) body for the recorded log.
     try { reportResponse(meta!.url, meta!.method, xhr.status, ct, raw); } catch { /* noop */ }
     const n = applyJsonPatches(data, rule.jsonPatches);
     if (n === 0) return;
@@ -433,6 +597,10 @@ XHR.prototype.send = function (this: XMLHttpRequest, body?: any) {
     xhr.addEventListener('load', tryPatch);
   } catch { /* noop */ }
 
+  if (delay > 0) {
+    setTimeout(() => origSend.call(xhr, body), delay);
+    return;
+  }
   return origSend.call(this, body);
 };
 

@@ -4,13 +4,18 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import { applyLanguage, LANGUAGE_STORAGE_KEY } from './i18n';
 import type { AppLanguage } from './i18n';
-import { LoggedRequest, MockRule, GlobalHeader } from './types';
+import { LoggedRequest, MockRule, GlobalHeader, HeaderProfile } from './types';
 import { formatUrl, formatTime, getMethodBadgeColor, generateId } from './utils';
 import {
   MOCK_RULES_KEY,
   MOCK_GLOBAL_ENABLED_KEY,
   GLOBAL_HEADERS_KEY,
   GLOBAL_HEADERS_ENABLED_KEY,
+  GLOBAL_HEADERS_URL_FILTER_KEY,
+  HEADER_PROFILES_KEY,
+  ACTIVE_HEADER_PROFILE_ID_KEY,
+  CORS_BYPASS_ENABLED_KEY,
+  CORS_BYPASS_URL_FILTER_KEY,
 } from './mockUtils';
 import { APP_CONFIG } from './config';
 import { Logo } from './components/Logo';
@@ -57,6 +62,14 @@ const Switch: React.FC<{
   );
 };
 
+const blankHeaderRow = (): GlobalHeader => ({
+  id: generateId(),
+  key: '',
+  value: '',
+  enabled: true,
+  operation: 'set',
+});
+
 const Popup = () => {
   const [activeTab, setActiveTab] = useState<PopupTab>('capture');
   const [isRecording, setIsRecording] = useState(false);
@@ -65,8 +78,16 @@ const Popup = () => {
   const [mockRules, setMockRules] = useState<MockRule[]>([]);
   const [globalHeaders, setGlobalHeaders] = useState<GlobalHeader[]>([]);
   const [globalHeadersEnabled, setGlobalHeadersEnabled] = useState(false);
+  const [headersUrlFilter, setHeadersUrlFilter] = useState('');
+  const [headerProfiles, setHeaderProfiles] = useState<HeaderProfile[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [newProfileName, setNewProfileName] = useState('');
+  const [corsBypassEnabled, setCorsBypassEnabled] = useState(false);
   const [headersLoaded, setHeadersLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentTabOnly, setCurrentTabOnly] = useState(false);
+  const [currentBrowserTabId, setCurrentBrowserTabId] = useState<number | null>(null);
   const [languageVersion, setLanguageVersion] = useState(0);
   const [language, setLanguage] = useState<AppLanguage>('system');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -97,11 +118,37 @@ const Popup = () => {
   const confirmResetText = chrome.i18n.getMessage("confirmResetAction") || 'Confirm reset?';
   const addHeaderText = chrome.i18n.getMessage("addHeader") || 'Add Header';
   const capturedEmptyHintText = chrome.i18n.getMessage("capturedEmptyHint") || 'Turn on Capture above and browse a page to record requests.';
+  const currentTabOnlyText = chrome.i18n.getMessage("currentTabOnly") || 'Current Tab';
+  const corsBypassText = chrome.i18n.getMessage("corsBypass") || 'CORS Bypass';
+  const hostFilterPh = chrome.i18n.getMessage("hostFilterPlaceholder") || 'Filter URL (e.g. localhost)';
+  const defaultProfileName = chrome.i18n.getMessage("headerProfileDefault") || 'Default';
+  const newProfileText = chrome.i18n.getMessage("newProfile") || 'New Profile';
 
   useEffect(() => {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.query === 'function') {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          setCurrentBrowserTabId(tabs?.[0]?.id ?? null);
+        });
+      }
+    } catch { /* ignore in preview */ }
+
     if (chrome.storage && chrome.storage.local) {
       chrome.storage.local.get(
-        ['isRecording', 'logs', MOCK_GLOBAL_ENABLED_KEY, MOCK_RULES_KEY, GLOBAL_HEADERS_KEY, GLOBAL_HEADERS_ENABLED_KEY, POPUP_ACTIVE_TAB_KEY, LANGUAGE_STORAGE_KEY],
+        [
+          'isRecording',
+          'logs',
+          MOCK_GLOBAL_ENABLED_KEY,
+          MOCK_RULES_KEY,
+          GLOBAL_HEADERS_KEY,
+          GLOBAL_HEADERS_ENABLED_KEY,
+          GLOBAL_HEADERS_URL_FILTER_KEY,
+          HEADER_PROFILES_KEY,
+          ACTIVE_HEADER_PROFILE_ID_KEY,
+          CORS_BYPASS_ENABLED_KEY,
+          POPUP_ACTIVE_TAB_KEY,
+          LANGUAGE_STORAGE_KEY,
+        ],
         (result) => {
           const storedLanguage = result[LANGUAGE_STORAGE_KEY];
           if (storedLanguage === 'en' || storedLanguage === 'zh_CN') {
@@ -117,8 +164,31 @@ const Popup = () => {
           setMockGlobalEnabled(result[MOCK_GLOBAL_ENABLED_KEY] === true);
           setLogs(result.logs || []);
           setMockRules(result[MOCK_RULES_KEY] || []);
-          setGlobalHeaders(result[GLOBAL_HEADERS_KEY] || []);
+
+          const initialHeaders: GlobalHeader[] = result[GLOBAL_HEADERS_KEY] || [];
+          const initialUrlFilter = typeof result[GLOBAL_HEADERS_URL_FILTER_KEY] === 'string' ? result[GLOBAL_HEADERS_URL_FILTER_KEY] : '';
+          let profiles: HeaderProfile[] = result[HEADER_PROFILES_KEY] || [];
+          let activeProfId: string | null = result[ACTIVE_HEADER_PROFILE_ID_KEY] || null;
+          if (profiles.length === 0) {
+            const def: HeaderProfile = {
+              id: 'default',
+              name: chrome.i18n.getMessage("headerProfileDefault") || 'Default',
+              headers: initialHeaders,
+              urlFilter: initialUrlFilter,
+            };
+            profiles = [def];
+            activeProfId = def.id;
+            chrome.storage.local.set({ [HEADER_PROFILES_KEY]: profiles, [ACTIVE_HEADER_PROFILE_ID_KEY]: activeProfId });
+          } else if (!activeProfId || !profiles.some(p => p.id === activeProfId)) {
+            activeProfId = profiles[0].id;
+          }
+
+          setHeaderProfiles(profiles);
+          setActiveProfileId(activeProfId);
+          setGlobalHeaders(initialHeaders);
           setGlobalHeadersEnabled(result[GLOBAL_HEADERS_ENABLED_KEY] === true);
+          setHeadersUrlFilter(initialUrlFilter);
+          setCorsBypassEnabled(result[CORS_BYPASS_ENABLED_KEY] === true);
           setHeadersLoaded(true);
         });
 
@@ -129,6 +199,10 @@ const Popup = () => {
         if (changes[MOCK_RULES_KEY]) setMockRules(changes[MOCK_RULES_KEY].newValue || []);
         if (changes[GLOBAL_HEADERS_KEY]) setGlobalHeaders(changes[GLOBAL_HEADERS_KEY].newValue || []);
         if (changes[GLOBAL_HEADERS_ENABLED_KEY]) setGlobalHeadersEnabled(changes[GLOBAL_HEADERS_ENABLED_KEY].newValue === true);
+        if (changes[GLOBAL_HEADERS_URL_FILTER_KEY]) setHeadersUrlFilter(changes[GLOBAL_HEADERS_URL_FILTER_KEY].newValue || '');
+        if (changes[HEADER_PROFILES_KEY]) setHeaderProfiles(changes[HEADER_PROFILES_KEY].newValue || []);
+        if (changes[ACTIVE_HEADER_PROFILE_ID_KEY]) setActiveProfileId(changes[ACTIVE_HEADER_PROFILE_ID_KEY].newValue || null);
+        if (changes[CORS_BYPASS_ENABLED_KEY]) setCorsBypassEnabled(changes[CORS_BYPASS_ENABLED_KEY].newValue === true);
         if (changes[LANGUAGE_STORAGE_KEY]) {
           const nextLanguage = changes[LANGUAGE_STORAGE_KEY].newValue;
           const normalized = nextLanguage === 'en' || nextLanguage === 'zh_CN' ? nextLanguage : 'system';
@@ -213,9 +287,85 @@ const Popup = () => {
     persistMockRules(mockRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
   };
 
-  const persistHeaders = (next: GlobalHeader[]) => {
+  const persistHeaders = (next: GlobalHeader[], nextFilter: string = headersUrlFilter) => {
     setGlobalHeaders(next);
-    chrome.storage.local.set({ [GLOBAL_HEADERS_KEY]: next });
+    const updatedProfiles = headerProfiles.map(p =>
+      p.id === activeProfileId ? { ...p, headers: next, urlFilter: nextFilter } : p
+    );
+    setHeaderProfiles(updatedProfiles);
+    chrome.storage.local.set({
+      [GLOBAL_HEADERS_KEY]: next,
+      [HEADER_PROFILES_KEY]: updatedProfiles,
+    });
+  };
+
+  const handleUrlFilterChange = (nextFilter: string) => {
+    setHeadersUrlFilter(nextFilter);
+    const updatedProfiles = headerProfiles.map(p =>
+      p.id === activeProfileId ? { ...p, headers: globalHeaders, urlFilter: nextFilter } : p
+    );
+    setHeaderProfiles(updatedProfiles);
+    chrome.storage.local.set({
+      [GLOBAL_HEADERS_URL_FILTER_KEY]: nextFilter,
+      [CORS_BYPASS_URL_FILTER_KEY]: nextFilter,
+      [HEADER_PROFILES_KEY]: updatedProfiles,
+    });
+  };
+
+  const handleSelectProfile = (profileId: string) => {
+    const found = headerProfiles.find(p => p.id === profileId);
+    if (!found) return;
+    const nextHeaders = found.headers.length > 0 ? found.headers : [blankHeaderRow()];
+    const nextFilter = found.urlFilter || '';
+    setActiveProfileId(profileId);
+    setGlobalHeaders(nextHeaders);
+    setHeadersUrlFilter(nextFilter);
+    chrome.storage.local.set({
+      [ACTIVE_HEADER_PROFILE_ID_KEY]: profileId,
+      [GLOBAL_HEADERS_KEY]: nextHeaders,
+      [GLOBAL_HEADERS_URL_FILTER_KEY]: nextFilter,
+    });
+  };
+
+  const handleConfirmNewProfile = () => {
+    const trimmed = newProfileName.trim() || `Profile ${headerProfiles.length + 1}`;
+    const created: HeaderProfile = {
+      id: generateId(),
+      name: trimmed,
+      headers: [blankHeaderRow()],
+      urlFilter: '',
+    };
+    const nextProfiles = [...headerProfiles, created];
+    setHeaderProfiles(nextProfiles);
+    setActiveProfileId(created.id);
+    setGlobalHeaders(created.headers);
+    setHeadersUrlFilter('');
+    setNewProfileName('');
+    setIsCreatingProfile(false);
+    chrome.storage.local.set({
+      [HEADER_PROFILES_KEY]: nextProfiles,
+      [ACTIVE_HEADER_PROFILE_ID_KEY]: created.id,
+      [GLOBAL_HEADERS_KEY]: created.headers,
+      [GLOBAL_HEADERS_URL_FILTER_KEY]: '',
+    });
+  };
+
+  const handleDeleteProfile = () => {
+    if (headerProfiles.length <= 1 || !activeProfileId) return;
+    const nextProfiles = headerProfiles.filter(p => p.id !== activeProfileId);
+    const fallback = nextProfiles[0];
+    const nextHeaders = fallback.headers.length > 0 ? fallback.headers : [blankHeaderRow()];
+    const nextFilter = fallback.urlFilter || '';
+    setHeaderProfiles(nextProfiles);
+    setActiveProfileId(fallback.id);
+    setGlobalHeaders(nextHeaders);
+    setHeadersUrlFilter(nextFilter);
+    chrome.storage.local.set({
+      [HEADER_PROFILES_KEY]: nextProfiles,
+      [ACTIVE_HEADER_PROFILE_ID_KEY]: fallback.id,
+      [GLOBAL_HEADERS_KEY]: nextHeaders,
+      [GLOBAL_HEADERS_URL_FILTER_KEY]: nextFilter,
+    });
   };
 
   const toggleHeadersEnabled = () => {
@@ -224,8 +374,17 @@ const Popup = () => {
     chrome.storage.local.set({ [GLOBAL_HEADERS_ENABLED_KEY]: newState });
   };
 
+  const toggleCorsBypass = () => {
+    const newState = !corsBypassEnabled;
+    setCorsBypassEnabled(newState);
+    chrome.storage.local.set({
+      [CORS_BYPASS_ENABLED_KEY]: newState,
+      [CORS_BYPASS_URL_FILTER_KEY]: headersUrlFilter,
+    });
+  };
+
   const addHeader = () => {
-    persistHeaders([...globalHeaders, { id: generateId(), key: '', value: '', enabled: true }]);
+    persistHeaders([...globalHeaders, blankHeaderRow()]);
   };
 
   const updateHeader = (id: string, patch: Partial<GlobalHeader>) => {
@@ -234,21 +393,28 @@ const Popup = () => {
 
   const removeHeader = (id: string) => {
     const next = globalHeaders.filter(h => h.id !== id);
-    persistHeaders(next.length ? next : [{ id: generateId(), key: '', value: '', enabled: true }]);
+    persistHeaders(next.length ? next : [blankHeaderRow()]);
   };
 
   // Wait for stored headers before creating an editable row in an empty list.
   useEffect(() => {
     if (headersLoaded && activeTab === 'header' && globalHeaders.length === 0) {
-      persistHeaders([{ id: generateId(), key: '', value: '', enabled: true }]);
+      persistHeaders([blankHeaderRow()]);
     }
-  }, [headersLoaded, activeTab, globalHeaders.length]);
+  }, [headersLoaded, activeTab, globalHeaders.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validLogs = logs.filter(log => {
     if (!log || !log.url || log.url.startsWith('chrome-extension')) return false;
+    if (currentTabOnly && currentBrowserTabId !== null && log.tabId !== currentBrowserTabId) {
+      return false;
+    }
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    return log.url.toLowerCase().includes(term) || log.method.toLowerCase().includes(term);
+    return (
+      log.url.toLowerCase().includes(term) ||
+      log.method.toLowerCase().includes(term) ||
+      (log.graphqlOperationName || '').toLowerCase().includes(term)
+    );
   });
 
   const enabledMockCount = mockRules.filter(r => r.enabled).length;
@@ -382,7 +548,7 @@ const Popup = () => {
         >
           <span className="inline-flex items-center justify-center gap-1.5">
             <span>{headerTabText}</span>
-            {globalHeadersEnabled && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+            {(globalHeadersEnabled || corsBypassEnabled) && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
           </span>
         </button>
       </nav>
@@ -390,7 +556,7 @@ const Popup = () => {
       {/* ===================== CAPTURE TAB ===================== */}
       {activeTab === 'capture' && (
         <>
-          <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+          <div className="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <span
                 className={`h-2 w-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-slate-300'}`}
@@ -411,8 +577,8 @@ const Popup = () => {
             />
           </div>
 
-          <div className="px-2.5 py-2 bg-white border-b border-slate-200 flex-shrink-0">
-            <div className="relative">
+          <div className="px-2.5 py-2 bg-white border-b border-slate-200 flex items-center gap-1.5 flex-shrink-0">
+            <div className="relative flex-1 min-w-0">
               <svg
                 className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                 fill="none"
@@ -427,14 +593,14 @@ const Popup = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Escape') setSearchTerm(''); }}
                 placeholder={filterRequestsText}
-                className="w-full text-xs pl-8 pr-7 py-1.5 bg-slate-50 focus:bg-white border border-slate-200 rounded-md focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 transition-all placeholder:text-slate-400"
+                className="w-full text-xs pl-8 pr-6 py-1.5 bg-slate-50 focus:bg-white border border-slate-200 rounded-md focus:outline-none focus:border-emerald-500 transition-all placeholder:text-slate-400"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
                   aria-label={clearText}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -442,6 +608,18 @@ const Popup = () => {
                 </button>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => setCurrentTabOnly(v => !v)}
+              title={currentTabOnlyText}
+              className={`px-2 py-1.5 rounded-md text-[11px] font-medium border whitespace-nowrap transition-colors ${
+                currentTabOnly
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {currentTabOnlyText}
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto bg-slate-50">
@@ -471,10 +649,20 @@ const Popup = () => {
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getMethodBadgeColor(log.method)}`}>
-                            {log.method}
-                          </span>
-                          <div className="flex items-center gap-2 tabular-nums">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${getMethodBadgeColor(log.method)}`}>
+                              {log.method}
+                            </span>
+                            {log.graphqlOperationName && (
+                              <span className="text-[10px] font-mono font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[90px]" title={log.graphqlOperationName}>
+                                {log.graphqlOperationName}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 tabular-nums flex-shrink-0">
+                            {typeof log.duration === 'number' && (
+                              <span className="text-[10px] text-slate-400 font-mono">{log.duration}ms</span>
+                            )}
                             <span className="text-[10px] text-slate-400 font-mono">
                               {formatTime(log.timestamp)}
                             </span>
@@ -557,6 +745,9 @@ const Popup = () => {
                           {rule.method}
                         </span>
                         <span className="text-xs font-semibold text-slate-700 truncate">{rule.name || rule.urlPattern || 'Mock'}</span>
+                        {typeof rule.delayMs === 'number' && rule.delayMs > 0 && (
+                          <span className="text-[9px] font-mono text-amber-700 bg-amber-50 px-1 rounded tabular-nums">{rule.delayMs}ms</span>
+                        )}
                       </div>
                       <span className="text-[11px] text-slate-500 truncate font-mono" title={rule.urlPattern}>{rule.urlPattern || '—'}</span>
                     </div>
@@ -594,7 +785,7 @@ const Popup = () => {
       {/* ===================== HEADER TAB ===================== */}
       {activeTab === 'header' && (
         <>
-          <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+          <div className="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${globalHeadersEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`} aria-hidden="true" />
               <span className={`text-xs font-medium ${globalHeadersEnabled ? 'text-slate-800' : 'text-slate-500'}`}>
@@ -607,13 +798,100 @@ const Popup = () => {
             <Switch on={globalHeadersEnabled} onClick={toggleHeadersEnabled} ariaLabel={headerTabText} />
           </div>
 
-          <div className="px-3.5 py-2 bg-slate-50/70 border-b border-slate-200 flex-shrink-0 flex items-start gap-2">
-            <svg className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-[11px] text-slate-600 leading-snug block">
-              {chrome.i18n.getMessage("globalHeaderHint") || 'When enabled, every network request will carry the enabled headers.'}
-            </span>
+          {/* Profiles, Host Filter & CORS Bypass */}
+          <div className="px-2.5 py-2 bg-white border-b border-slate-200 space-y-1.5 flex-shrink-0">
+            <div className="flex items-center gap-1.5">
+              {isCreatingProfile ? (
+                <div className="flex-1 flex items-center gap-1">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={newProfileName}
+                    onChange={(e) => setNewProfileName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleConfirmNewProfile();
+                      else if (e.key === 'Escape') { setIsCreatingProfile(false); setNewProfileName(''); }
+                    }}
+                    placeholder={newProfileText}
+                    className="flex-1 min-w-0 text-xs px-2 py-1 border border-emerald-500 rounded focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleConfirmNewProfile}
+                    className="px-2 py-1 text-[11px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                  >
+                    OK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setIsCreatingProfile(false); setNewProfileName(''); }}
+                    className="px-1.5 py-1 text-[11px] text-slate-500 hover:text-slate-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <select
+                    aria-label="Header Profile"
+                    value={activeProfileId || 'default'}
+                    onChange={(e) => handleSelectProfile(e.target.value)}
+                    className="flex-1 min-w-0 text-xs border border-slate-200 rounded-md px-2 py-1 bg-slate-50 focus:bg-white text-slate-700 focus:outline-none focus:border-emerald-500"
+                  >
+                    {headerProfiles.map(p => (
+                      <option key={p.id} value={p.id}>{p.name || defaultProfileName}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatingProfile(true)}
+                    title={newProfileText}
+                    aria-label={newProfileText}
+                    className="px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md"
+                  >
+                    +
+                  </button>
+                  {headerProfiles.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteProfile}
+                      title={chrome.i18n.getMessage("delete") || 'Delete'}
+                      aria-label={chrome.i18n.getMessage("delete") || 'Delete'}
+                      className="p-1 text-slate-400 hover:text-red-500 rounded border border-slate-200 hover:border-red-200"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <input
+                type="text"
+                value={headersUrlFilter}
+                onChange={(e) => handleUrlFilterChange(e.target.value)}
+                placeholder={hostFilterPh}
+                aria-label={hostFilterPh}
+                className="flex-1 min-w-0 text-[11px] font-mono px-2 py-1 bg-slate-50 focus:bg-white border border-slate-200 rounded focus:outline-none focus:border-emerald-500"
+              />
+              <button
+                type="button"
+                role="switch"
+                aria-checked={corsBypassEnabled}
+                onClick={toggleCorsBypass}
+                title={corsBypassText}
+                className={`px-2 py-1 text-[11px] font-semibold rounded border whitespace-nowrap transition-colors ${
+                  corsBypassEnabled
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                CORS
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto bg-slate-50">
@@ -641,42 +919,63 @@ const Popup = () => {
             ) : (
               <>
                 <ul className="divide-y divide-slate-100 bg-white">
-                  {globalHeaders.map(h => (
-                    <li key={h.id} className="px-2.5 py-2 bg-white flex items-center gap-1.5">
-                      <input
-                        type="checkbox"
-                        checked={h.enabled}
-                        aria-label={h.key || addHeaderText}
-                        onChange={(e) => updateHeader(h.id, { enabled: e.target.checked })}
-                        className="h-3.5 w-3.5 flex-shrink-0 appearance-none rounded border border-slate-300 bg-white checked:bg-emerald-600 checked:border-emerald-600 checked:bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22white%22%3E%3Cpath%20d%3D%22M12.207%204.793a1%201%200%20010%201.414l-5%205a1%201%200%2001-1.414%200l-2-2a1%201%200%20011.414-1.414L6.5%209.086l4.293-4.293a1%201%200%20011.414%200z%22/%3E%3C/svg%3E')] bg-no-repeat bg-center cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={h.key}
-                        onChange={(e) => updateHeader(h.id, { key: e.target.value })}
-                        placeholder={chrome.i18n.getMessage("headerKeyPlaceholder") || 'Header'}
-                        className="w-[44%] text-[11px] px-2 py-1 bg-slate-50 focus:bg-white border border-slate-200 rounded focus:outline-none focus:border-emerald-500 font-mono"
-                      />
-                      <input
-                        type="text"
-                        value={h.value}
-                        onChange={(e) => updateHeader(h.id, { value: e.target.value })}
-                        placeholder={chrome.i18n.getMessage("headerValuePlaceholder") || 'Value'}
-                        className="flex-1 min-w-0 text-[11px] px-2 py-1 bg-slate-50 focus:bg-white border border-slate-200 rounded focus:outline-none focus:border-emerald-500 font-mono"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeHeader(h.id)}
-                        title={chrome.i18n.getMessage("delete") || 'Delete'}
-                        aria-label={chrome.i18n.getMessage("delete") || 'Delete'}
-                        className="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-red-50 flex-shrink-0 transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </li>
-                  ))}
+                  {globalHeaders.map(h => {
+                    const isRemove = h.operation === 'remove';
+                    return (
+                      <li key={h.id} className="px-2 py-2 bg-white flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={h.enabled}
+                          aria-label={h.key || addHeaderText}
+                          onChange={(e) => updateHeader(h.id, { enabled: e.target.checked })}
+                          className="h-3.5 w-3.5 flex-shrink-0 appearance-none rounded border border-slate-300 bg-white checked:bg-emerald-600 checked:border-emerald-600 checked:bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22white%22%3E%3Cpath%20d%3D%22M12.207%204.793a1%201%200%20010%201.414l-5%205a1%201%200%2001-1.414%200l-2-2a1%201%200%20011.414-1.414L6.5%209.086l4.293-4.293a1%201%200%20011.414%200z%22/%3E%3C/svg%3E')] bg-no-repeat bg-center cursor-pointer"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateHeader(h.id, { operation: isRemove ? 'set' : 'remove' })}
+                          title={isRemove ? 'Remove matching header' : 'Set header value'}
+                          className={`px-1 py-1 rounded text-[9px] font-bold font-mono flex-shrink-0 border ${
+                            isRemove
+                              ? 'bg-red-50 text-red-600 border-red-200'
+                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {isRemove ? 'RM' : 'SET'}
+                        </button>
+                        <input
+                          type="text"
+                          value={h.key}
+                          onChange={(e) => updateHeader(h.id, { key: e.target.value })}
+                          placeholder={chrome.i18n.getMessage("headerKeyPlaceholder") || 'Header'}
+                          className="w-[38%] text-[11px] px-1.5 py-1 bg-slate-50 focus:bg-white border border-slate-200 rounded focus:outline-none focus:border-emerald-500 font-mono"
+                        />
+                        {isRemove ? (
+                          <span className="flex-1 min-w-0 text-[10px] text-red-500 italic px-1.5 truncate font-mono">
+                            (remove)
+                          </span>
+                        ) : (
+                          <input
+                            type="text"
+                            value={h.value}
+                            onChange={(e) => updateHeader(h.id, { value: e.target.value })}
+                            placeholder={chrome.i18n.getMessage("headerValuePlaceholder") || 'Value'}
+                            className="flex-1 min-w-0 text-[11px] px-1.5 py-1 bg-slate-50 focus:bg-white border border-slate-200 rounded focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeHeader(h.id)}
+                          title={chrome.i18n.getMessage("delete") || 'Delete'}
+                          aria-label={chrome.i18n.getMessage("delete") || 'Delete'}
+                          className="text-slate-400 hover:text-red-500 p-0.5 rounded hover:bg-red-50 flex-shrink-0 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
                 <div className="px-3 py-2.5">
                   <button

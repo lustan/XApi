@@ -1,17 +1,27 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { HttpRequest, HttpMethod, KeyValue } from '../types';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { HttpRequest, HttpMethod, KeyValue, EnvironmentVariable } from '../types';
 import { getMethodColor, queryStringToParams, generateCurlFromRequest } from '../utils';
+import { buildVariableMap, interpolateTemplate } from '../envUtils';
 
 interface RequestHeaderProps {
     request: HttpRequest;
     onRequestChange: (req: HttpRequest) => void;
     onSend: () => void;
     isSending: boolean;
+    activeEnvVariables?: EnvironmentVariable[];
+    onOpenCodeGen?: () => void;
 }
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'];
 
-export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequestChange, onSend, isSending }) => {
+export const RequestHeader: React.FC<RequestHeaderProps> = ({
+    request,
+    onRequestChange,
+    onSend,
+    isSending,
+    activeEnvVariables = [],
+    onOpenCodeGen,
+}) => {
     const [isMethodOpen, setIsMethodOpen] = useState(false);
     const [copiedCurl, setCopiedCurl] = useState(false);
     const methodRef = useRef<HTMLDivElement>(null);
@@ -49,6 +59,11 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
         });
     };
 
+    const resolvedUrlPreview = useMemo(() => {
+        if (!request.url || !request.url.includes('{{')) return null;
+        return interpolateTemplate(request.url, buildVariableMap(activeEnvVariables));
+    }, [request.url, activeEnvVariables]);
+
     const handleCopyCurl = async () => {
         const curl = generateCurlFromRequest(request);
         try {
@@ -76,6 +91,7 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
     const sendingText = chrome.i18n.getMessage("sending");
     const copiedText = chrome.i18n.getMessage("copied") || 'Copied';
     const copyCurlText = chrome.i18n.getMessage("copyCurlTooltip") || 'Copy as cURL';
+    const codeSnippetText = chrome.i18n.getMessage("codeSnippet") || 'Code';
 
     return (
         <div className="border-b border-slate-200 bg-white px-3 py-2.5">
@@ -138,7 +154,7 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
                         type="button"
                         onClick={onSend} 
                         disabled={isSending}
-                        className={`rounded-r-md px-5 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 flex-shrink-0 border border-transparent ${
+                        className={`rounded-r-md px-5 py-2 text-xs font-bold text-white transition-colors flex items-center gap-1.5 flex-shrink-0 border border-transparent whitespace-nowrap ${
                             isSending ? 'bg-emerald-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
                         }`}
                     >
@@ -180,7 +196,32 @@ export const RequestHeader: React.FC<RequestHeaderProps> = ({ request, onRequest
                         </>
                     )}
                 </button>
+
+                {/* Code Snippet / Types Button */}
+                {onOpenCodeGen && (
+                    <button
+                        type="button"
+                        onClick={onOpenCodeGen}
+                        title={codeSnippetText}
+                        aria-label={codeSnippetText}
+                        className="px-3 py-2 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 text-xs font-medium flex items-center gap-1.5 flex-shrink-0 transition-colors whitespace-nowrap"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        <span>{codeSnippetText}</span>
+                    </button>
+                )}
             </div>
+
+            {resolvedUrlPreview && (
+                <div className="mt-1.5 px-1 flex items-center gap-1.5 text-[11px] font-mono text-slate-500 truncate" title={resolvedUrlPreview}>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded flex-shrink-0">
+                        Resolved
+                    </span>
+                    <span className="truncate">{resolvedUrlPreview}</span>
+                </div>
+            )}
         </div>
     );
 };

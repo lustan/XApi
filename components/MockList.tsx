@@ -15,6 +15,7 @@ interface MockListProps {
   onDuplicate: (id: string) => void;
   onClear: () => void;
   onRename: (id: string, newName: string) => void;
+  onExport?: () => void;
 }
 
 const t = (key: string, fallback: string) => {
@@ -46,7 +47,7 @@ const clampPosition = (x: number, y: number, width: number, height: number) => {
 
 export const MockList: React.FC<MockListProps> = ({
   rules, globalEnabled, activeRuleId,
-  onSelect, onCreate, onToggleGlobal, onToggleRule, onDelete, onDuplicate, onClear, onRename
+  onSelect, onCreate, onToggleGlobal, onToggleRule, onDelete, onDuplicate, onClear, onRename, onExport
 }) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
   const [renameTicks, setRenameTicks] = useState<Record<string, number>>({});
@@ -68,17 +69,18 @@ export const MockList: React.FC<MockListProps> = ({
   const renameText = t('rename', 'Rename');
   const clearText = t('clear', 'Clear');
   const ruleNamePlaceholder = t('mockRuleNamePlaceholder', 'Rule name');
+  const exportMocksText = t('exportMocks', 'Export Mocks');
 
   return (
     <div className="flex flex-col h-full">
       <div className="p-2 bg-slate-50 sticky top-0 z-10 border-b border-slate-200">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <button
               type="button"
               onClick={onToggleGlobal}
               title={globalEnabled ? activeLabel : pausedLabel}
-              className={`flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border transition-colors ${
+              className={`flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border transition-colors whitespace-nowrap ${
                 globalEnabled
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -89,11 +91,22 @@ export const MockList: React.FC<MockListProps> = ({
             </button>
           </div>
           <div className="flex items-center space-x-2">
+            {rules.length > 0 && onExport && (
+              <button
+                type="button"
+                onClick={onExport}
+                title={exportMocksText}
+                aria-label={exportMocksText}
+                className="text-[11px] text-slate-500 hover:text-slate-800 font-semibold transition-colors whitespace-nowrap"
+              >
+                {chrome.i18n.getMessage("export") || 'Export'}
+              </button>
+            )}
             {rules.length > 0 && (
               <button
                 type="button"
                 onClick={onClear}
-                className="text-[11px] text-slate-400 hover:text-red-500 font-semibold transition-colors"
+                className="text-[11px] text-slate-400 hover:text-red-500 font-semibold transition-colors whitespace-nowrap"
               >
                 {clearText}
               </button>
@@ -101,7 +114,7 @@ export const MockList: React.FC<MockListProps> = ({
             <button
               type="button"
               onClick={onCreate}
-              className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold flex items-center transition-colors"
+              className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold flex items-center transition-colors whitespace-nowrap"
             >
               <svg className="w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               {newRuleText}
@@ -160,6 +173,15 @@ export const MockList: React.FC<MockListProps> = ({
                   metaExtras={
                     <>
                       <span className="text-[10px] text-slate-400 uppercase">{r.mode === 'replace' ? 'replace' : 'patch'}</span>
+                      {r.matchMode && r.matchMode !== 'startsWith' && (
+                        <span className="text-[9px] text-sky-700 bg-sky-50 px-1 rounded font-mono uppercase">{r.matchMode === 'wildcard' ? 'glob' : r.matchMode}</span>
+                      )}
+                      {typeof r.delayMs === 'number' && r.delayMs > 0 && (
+                        <span className="text-[9px] text-amber-700 bg-amber-50 px-1 rounded font-mono tabular-nums">{r.delayMs}ms</span>
+                      )}
+                      {r.simulateNetworkError && (
+                        <span className="text-[9px] text-red-700 bg-red-50 px-1 rounded font-mono">ERR</span>
+                      )}
                       <span className="text-[10px] text-slate-400 ml-1 tabular-nums">{hitsLabel}: {r.hitCount || 0}</span>
                     </>
                   }

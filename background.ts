@@ -1,4 +1,3 @@
-
 // background.ts
 
 const MAX_LOGS = 100;
@@ -6,18 +5,34 @@ const EXTENSION_ID = chrome.runtime.id;
 
 // Rule IDs for declarativeNetRequest session rules.
 //  1 = dashboard replay header override (single URL, high priority)
-//  2 = global headers injected into every network request (Header tab)
+//  2 = global headers injected into network requests (Header tab)
+//  3 = CORS bypass response headers override
 const REPLAY_HEADER_RULE_ID = 1;
 const GLOBAL_HEADER_RULE_ID = 2;
+const CORS_BYPASS_RULE_ID = 3;
+
 const GLOBAL_HEADERS_KEY = 'globalHeaders';
 const GLOBAL_HEADERS_ENABLED_KEY = 'globalHeadersEnabled';
+const GLOBAL_HEADERS_URL_FILTER_KEY = 'globalHeadersUrlFilter';
+const CORS_BYPASS_ENABLED_KEY = 'corsBypassEnabled';
+const CORS_BYPASS_URL_FILTER_KEY = 'corsBypassUrlFilter';
+const CAPTURE_EXCLUDE_DOMAINS_KEY = 'captureExcludeDomains';
 
 // Store pending requests in memory to correlate headers/body/completion
 const pendingRequests: Record<string, any> = {};
 let isRecordingCached = false;
+let excludedDomainsCached: string[] = [];
 
-chrome.storage.local.get(['isRecording'], (result) => {
+const normalizeExcludedDomains = (raw: any): string[] => {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((d) => String(d || '').trim().toLowerCase())
+    .filter(Boolean);
+};
+
+chrome.storage.local.get(['isRecording', CAPTURE_EXCLUDE_DOMAINS_KEY], (result) => {
   isRecordingCached = !!result?.isRecording;
+  excludedDomainsCached = normalizeExcludedDomains(result?.[CAPTURE_EXCLUDE_DOMAINS_KEY]);
 });
 
 const updateBadge = (recording: boolean) => {
@@ -31,26 +46,48 @@ const updateBadge = (recording: boolean) => {
   }
 };
 
+const extractGraphqlOperationName = (body: any): string | undefined => {
+  if (!body) return undefined;
+  let obj = body;
+  if (typeof body === 'string') {
+    const trimmed = body.trim();
+    if (!trimmed.startsWith('{')) return undefined;
+    try {
+      obj = JSON.parse(trimmed);
+    } catch {
+      return undefined;
+    }
+  }
+  if (!obj || typeof obj !== 'object') return undefined;
+  if (typeof obj.operationName === 'string' && obj.operationName.trim()) {
+    return obj.operationName.trim();
+  }
+  if (typeof obj.query === 'string') {
+    const m = obj.query.match(/\b(?:query|mutation|subscription)\s+([A-Za-z0-9_]+)/);
+    if (m && m[1]) return m[1];
+  }
+  return undefined;
+};
+
 chrome.runtime.onInstalled.addListener(() => {
   isRecordingCached = false;
   chrome.storage.local.set({ isRecording: false, logs: [] });
   updateBadge(false);
-  // Clear any existing dynamic replay rule on startup
   chrome.declarativeNetRequest.updateSessionRules({
      removeRuleIds: [REPLAY_HEADER_RULE_ID]
   });
-  // Rebuild the global header rule from persisted state.
   applyGlobalHeaderRule();
+  syncCorsBypassOnBoot();
 });
 
-// Session rules are cleared when the service worker/browser restarts, so
-// rebuild the global header rule whenever the SW spins back up.
 chrome.runtime.onStartup.addListener(() => {
-  chrome.storage.local.get(['isRecording'], (result) => {
+  chrome.storage.local.get(['isRecording', CAPTURE_EXCLUDE_DOMAINS_KEY], (result) => {
     isRecordingCached = !!result?.isRecording;
+    excludedDomainsCached = normalizeExcludedDomains(result?.[CAPTURE_EXCLUDE_DOMAINS_KEY]);
     updateBadge(isRecordingCached);
   });
   applyGlobalHeaderRule();
+  syncCorsBypassOnBoot();
 });
 
 chrome.storage.onChanged.addListener((changes) => {
@@ -58,27 +95,44 @@ chrome.storage.onChanged.addListener((changes) => {
     isRecordingCached = !!changes.isRecording.newValue;
     updateBadge(isRecordingCached);
   }
-  if (changes[GLOBAL_HEADERS_KEY] || changes[GLOBAL_HEADERS_ENABLED_KEY]) {
+  if (changes[CAPTURE_EXCLUDE_DOMAINS_KEY]) {
+    excludedDomainsCached = normalizeExcludedDomains(changes[CAPTURE_EXCLUDE_DOMAINS_KEY].newValue);
+  }
+  if (changes[GLOBAL_HEADERS_KEY] || changes[GLOBAL_HEADERS_ENABLED_KEY] || changes[GLOBAL_HEADERS_URL_FILTER_KEY]) {
     applyGlobalHeaderRule();
+  }
+  if (changes[CORS_BYPASS_ENABLED_KEY] || changes[CORS_BYPASS_URL_FILTER_KEY]) {
+    applyCorsBypassRule();
   }
 });
 
 // --- Global Header DNR Rule ---
-// Reads globalHeadersEnabled + globalHeaders from storage and maintains a
-// single session rule (id=2) that SETs each enabled header on every network
-// request. Removes the rule when disabled or when no enabled headers exist.
 const applyGlobalHeaderRule = () => {
-    chrome.storage.local.get([GLOBAL_HEADERS_KEY, GLOBAL_HEADERS_ENABLED_KEY], (result) => {
+    chrome.storage.local.get([GLOBAL_HEADERS_KEY, GLOBAL_HEADERS_ENABLED_KEY, GLOBAL_HEADERS_URL_FILTER_KEY], (result) => {
         if (chrome.runtime.lastError) return;
-        const enabled = result[GLOBAL_HEADERS_ENABLED_KEY] === true; // default OFF
+        const enabled = result[GLOBAL_HEADERS_ENABLED_KEY] === true;
         const headers = (result[GLOBAL_HEADERS_KEY] || []) as any[];
+        const urlFilter = typeof result[GLOBAL_HEADERS_URL_FILTER_KEY] === 'string'
+            ? result[GLOBAL_HEADERS_URL_FILTER_KEY].trim()
+            : '';
+
+        const removeOp = (chrome.declarativeNetRequest.HeaderOperation as any)?.REMOVE || 'remove';
+
         const requestHeaders = headers
             .filter(h => h && h.enabled && h.key)
-            .map(h => ({
-                header: h.key,
-                operation: chrome.declarativeNetRequest.HeaderOperation.SET,
-                value: h.value ?? ''
-            }));
+            .map(h => {
+                if (h.operation === 'remove') {
+                    return {
+                        header: h.key,
+                        operation: removeOp
+                    };
+                }
+                return {
+                    header: h.key,
+                    operation: chrome.declarativeNetRequest.HeaderOperation.SET,
+                    value: h.value ?? ''
+                };
+            });
 
         if (!enabled || requestHeaders.length === 0) {
             chrome.declarativeNetRequest.updateSessionRules({
@@ -87,22 +141,23 @@ const applyGlobalHeaderRule = () => {
             return;
         }
 
+        const condition: any = {
+            resourceTypes: Object.values(
+                chrome.declarativeNetRequest.ResourceType
+            )
+        };
+        if (urlFilter) {
+            condition.urlFilter = urlFilter;
+        }
+
         const rule = {
             id: GLOBAL_HEADER_RULE_ID,
-            // Lower than the replay rule (999) so a dashboard replay can still
-            // override the same header for its specific request.
             priority: 1,
             action: {
                 type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
                 requestHeaders
             },
-            condition: {
-                // DNR excludes main_frame when resourceTypes is omitted, so
-                // enumerate every type explicitly to include page navigation.
-                resourceTypes: Object.values(
-                    chrome.declarativeNetRequest.ResourceType
-                )
-            }
+            condition
         };
 
         chrome.declarativeNetRequest.updateSessionRules({
@@ -110,6 +165,63 @@ const applyGlobalHeaderRule = () => {
             addRules: [rule as any]
         }).catch(error => {
             console.error('Failed to apply global header rule:', error);
+        });
+    });
+};
+
+// --- One-Click CORS Bypass DNR Rule ---
+const syncCorsBypassOnBoot = () => {
+    chrome.storage.local.get([CORS_BYPASS_ENABLED_KEY], (result) => {
+        if (chrome.runtime.lastError) return;
+        if (result[CORS_BYPASS_ENABLED_KEY] === true) {
+            applyCorsBypassRule();
+        }
+    });
+};
+
+const applyCorsBypassRule = () => {
+    chrome.storage.local.get([CORS_BYPASS_ENABLED_KEY, CORS_BYPASS_URL_FILTER_KEY], (result) => {
+        if (chrome.runtime.lastError) return;
+        const enabled = result[CORS_BYPASS_ENABLED_KEY] === true;
+        if (!enabled) {
+            chrome.declarativeNetRequest.updateSessionRules({
+                removeRuleIds: [CORS_BYPASS_RULE_ID]
+            }).catch(() => { /* noop */ });
+            return;
+        }
+
+        const urlFilter = typeof result[CORS_BYPASS_URL_FILTER_KEY] === 'string'
+            ? result[CORS_BYPASS_URL_FILTER_KEY].trim()
+            : '';
+
+        const setOp = chrome.declarativeNetRequest.HeaderOperation.SET;
+        const condition: any = {
+            resourceTypes: [chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST]
+        };
+        if (urlFilter) {
+            condition.urlFilter = urlFilter;
+        }
+
+        const rule = {
+            id: CORS_BYPASS_RULE_ID,
+            priority: 2,
+            action: {
+                type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
+                responseHeaders: [
+                    { header: 'Access-Control-Allow-Origin', operation: setOp, value: '*' },
+                    { header: 'Access-Control-Allow-Methods', operation: setOp, value: 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD' },
+                    { header: 'Access-Control-Allow-Headers', operation: setOp, value: '*' },
+                    { header: 'Access-Control-Allow-Credentials', operation: setOp, value: 'true' }
+                ]
+            },
+            condition
+        };
+
+        chrome.declarativeNetRequest.updateSessionRules({
+            removeRuleIds: [CORS_BYPASS_RULE_ID],
+            addRules: [rule as any]
+        }).catch(error => {
+            console.error('Failed to apply CORS bypass rule:', error);
         });
     });
 };
@@ -149,7 +261,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             },
             condition: {
                 urlFilter: cleanUrl,
-                // Only modify headers for API requests (fetch/XHR)
                 resourceTypes: [
                     chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST
                 ]
@@ -178,35 +289,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
-    // Captured JSON response body from the page-side mock-injector.
-    // Best-effort match to the most recent log entry for the same url+method.
     if (message.type === 'XAPI_RESPONSE_BODY' && message.payload) {
         const { url, method, body, truncated } = message.payload;
         if (typeof url !== 'string' || typeof body !== 'string') return;
         if (!isRecordingCached) return;
         attachResponseBody(url, method, body, !!truncated);
-        return; // no async sendResponse
+        return;
     }
 });
 
-// Locate the most recent matching log entry (in pendingRequests first, else
-// in stored logs) and write responseBody onto it.
 const attachResponseBody = (url: string, method: string, body: string, truncated: boolean) => {
     const m = (method || 'GET').toUpperCase();
-    // 1) Try in-memory pending requests (preferred — matches by exact request).
     const matches = Object.values(pendingRequests).filter((p: any) =>
         p && p.url === url && (p.method || '').toUpperCase() === m
     ) as any[];
     if (matches.length > 0) {
-        // Most recent wins.
         const log = matches.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
         log.responseBody = body;
         if (truncated) log.responseTruncated = true;
         saveLog(log);
         return;
     }
-    // 2) Fallback: patch the most recent matching entry already in storage,
-    //    bounded to the last 10s to avoid overwriting unrelated old logs.
     chrome.storage.local.get(['logs'], (res) => {
         const logs = (res.logs || []) as any[];
         const now = Date.now();
@@ -238,11 +341,9 @@ const processQueue = () => {
         let newLogs;
 
         if (idx !== -1) {
-            // Merge update into existing entry
             currentLogs[idx] = { ...currentLogs[idx], ...logToSave };
             newLogs = currentLogs;
         } else {
-            // Don't save partial logs that don't at least have a URL
             if (!logToSave.url) {
                 isSaving = false;
                 if (saveQueue.length > 0) processQueue();
@@ -259,7 +360,7 @@ const processQueue = () => {
 };
 
 const saveLog = (log: any) => {
-  saveQueue.push({ ...log }); // Push a copy
+  saveQueue.push({ ...log });
   processQueue();
 };
 
@@ -272,21 +373,29 @@ const isExtensionRequest = (details: any) => {
     );
 };
 
-/**
- * Filter for API requests only.
- * In Chrome's webRequest API, 'xmlhttprequest' covers both XHR and Fetch.
- */
+const isExcludedDomain = (url: string) => {
+    if (excludedDomainsCached.length === 0) return false;
+    try {
+        const host = new URL(url).hostname.toLowerCase();
+        return excludedDomainsCached.some((d) => host === d || host.endsWith(`.${d}`));
+    } catch {
+        return false;
+    }
+};
+
 const isApiRequest = (details: any) => {
     return details.type === 'xmlhttprequest';
 };
 
-// Internal helper to get or create a pending request object
-const getOrCreatePending = (requestId: string) => {
+const getOrCreatePending = (requestId: string, tabId?: number) => {
     if (!pendingRequests[requestId]) {
+        const now = Date.now();
         pendingRequests[requestId] = {
             id: requestId,
             status: 0,
-            timestamp: Date.now(),
+            timestamp: now,
+            startTime: now,
+            tabId: typeof tabId === 'number' && tabId >= 0 ? tabId : undefined,
             requestHeaders: {},
             responseHeaders: {}
         };
@@ -297,9 +406,9 @@ const getOrCreatePending = (requestId: string) => {
 // 1. Capture Basic Info & Body
 chrome.webRequest.onBeforeRequest.addListener(
   (details: any) => {
-    if (!isRecordingCached || isExtensionRequest(details) || details.type === 'ping' || !isApiRequest(details)) return;
+    if (!isRecordingCached || isExtensionRequest(details) || details.type === 'ping' || !isApiRequest(details) || isExcludedDomain(details.url)) return;
 
-    const log = getOrCreatePending(details.requestId);
+    const log = getOrCreatePending(details.requestId, details.tabId);
     log.url = details.url;
     log.method = details.method;
     log.type = details.type;
@@ -307,8 +416,13 @@ chrome.webRequest.onBeforeRequest.addListener(
     if (details.requestBody) {
       if (details.requestBody.raw && details.requestBody.raw[0]) {
          const enc = new TextDecoder("utf-8");
-         try { log.requestBody = enc.decode(details.requestBody.raw[0].bytes); }
-         catch (e) { log.requestBody = "[Binary Data]"; }
+         try {
+           log.requestBody = enc.decode(details.requestBody.raw[0].bytes);
+           const op = extractGraphqlOperationName(log.requestBody);
+           if (op) log.graphqlOperationName = op;
+         } catch {
+           log.requestBody = "[Binary Data]";
+         }
       } else if (details.requestBody.formData) {
          log.requestBody = details.requestBody.formData;
       }
@@ -323,9 +437,9 @@ chrome.webRequest.onBeforeRequest.addListener(
 // 2. Capture Request Headers
 chrome.webRequest.onBeforeSendHeaders.addListener(
   (details: any) => {
-    if (!isRecordingCached || isExtensionRequest(details) || !isApiRequest(details)) return;
+    if (!isRecordingCached || isExtensionRequest(details) || !isApiRequest(details) || isExcludedDomain(details.url)) return;
 
-    const log = getOrCreatePending(details.requestId);
+    const log = getOrCreatePending(details.requestId, details.tabId);
     const headers: Record<string, string> = {};
     details.requestHeaders?.forEach((h: any) => { headers[h.name] = h.value || ''; });
     log.requestHeaders = { ...log.requestHeaders, ...headers };
@@ -339,9 +453,9 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 // 3. Capture Response Headers
 chrome.webRequest.onHeadersReceived.addListener(
   (details: any) => {
-    if (!isRecordingCached || isExtensionRequest(details) || !isApiRequest(details)) return;
+    if (!isRecordingCached || isExtensionRequest(details) || !isApiRequest(details) || isExcludedDomain(details.url)) return;
 
-    const log = getOrCreatePending(details.requestId);
+    const log = getOrCreatePending(details.requestId, details.tabId);
     const headers: Record<string, string> = {};
     details.responseHeaders?.forEach((h: any) => { headers[h.name] = h.value || ''; });
     log.responseHeaders = { ...log.responseHeaders, ...headers };
@@ -358,8 +472,10 @@ chrome.webRequest.onCompleted.addListener(
     if (pendingRequests[details.requestId] && isApiRequest(details)) {
       const log = pendingRequests[details.requestId];
       log.status = details.statusCode;
+      if (log.startTime) {
+        log.duration = Math.max(0, Date.now() - log.startTime);
+      }
       saveLog(log);
-      // Clean up after a short delay to allow last-second async tasks
       setTimeout(() => { delete pendingRequests[details.requestId]; }, 2000);
     }
   },
@@ -372,6 +488,9 @@ chrome.webRequest.onErrorOccurred.addListener(
       const log = pendingRequests[details.requestId];
       log.status = 0;
       log.error = details.error;
+      if (log.startTime) {
+        log.duration = Math.max(0, Date.now() - log.startTime);
+      }
       saveLog(log);
       delete pendingRequests[details.requestId];
     }
