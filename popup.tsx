@@ -438,7 +438,7 @@ const Popup = () => {
     <div key={languageVersion} className="w-80 bg-white flex flex-col h-[500px] text-slate-800">
       {/* Header */}
       <header className="px-3.5 py-2.5 bg-slate-900 text-white flex justify-between items-center border-b border-slate-800 flex-shrink-0">
-        <Logo size={24} tone="dark" />
+        <Logo size={24} tone="dark" showIcon={false} />
         <div className="relative" ref={settingsRef}>
           <button
             type="button"
